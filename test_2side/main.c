@@ -26,14 +26,22 @@ int main (void)
     printf("Bloom not initialized\n");
     return 0;
   }
-  if(bloom_init(&edge_bloom, 200*K, 0.01))
+  if(bloom_init(&edge_bloom, 200*K, 0.0001))
   {
     printf("Edge bloom not initialized\n");
     return 0;
   }
+  if(bloom_init(&sparse_bloom, fsize/10, 0.2))
+  {
+    printf("Sparse bloom not initialized\n");
+    return 0;
+  }
   parse_fasta(fd, K);
+  fseek(fd, 0, SEEK_SET);
+  sparse_fasta(fd, K, 1);
   bloom_print(&bloom);
   bloom_print(&edge_bloom);
+  bloom_print(&sparse_bloom);
   check = bloom_check(&bloom, "TTTTTTTATATATAGGGGCC", K);
   if(check == 1)
   {
@@ -52,5 +60,6 @@ int main (void)
   fclose(fd);
   bloom_free(&bloom);
   bloom_free(&edge_bloom);
+  bloom_free(&sparse_bloom);
   return 0;
 }

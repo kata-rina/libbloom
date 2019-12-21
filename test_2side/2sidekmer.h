@@ -27,9 +27,11 @@
     contained in genome sequences.
     ~ Structure edge_bloom is used for bloom-filter which contains only edge
     k-mers of genome sequences.
+    ~ Structure sparse_bloom is used to store k-mers with distance of s
 */
 struct bloom bloom;
 struct bloom edge_bloom;
+struct bloom sparse_bloom;
 
 /*
     Funtion parse_fasta is used to decompose input FASTA file in k-mers with
@@ -43,5 +45,6 @@ struct bloom edge_bloom;
 */
 int parse_fasta ( FILE * fd, size_t kmer_size );
 int two_sided_contains ( char * kmer, size_t kmer_size );
+int sparse_fasta ( FILE *fd, size_t kmer_size, uint8_t s );
 
 #endif
