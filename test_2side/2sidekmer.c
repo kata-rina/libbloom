@@ -22,7 +22,9 @@ int parse_fasta ( FILE * fd, size_t kmer_size )
     }
     for (i = 0; i < len - 1; i++)
     {
-      if(strlen(line + i) - 1 < kmer_size)
+      if(((strlen(line + i) - 1 < kmer_size)
+          || (strlen(line + i) + strlen(last_kmer) - 1 < kmer_size))
+          && first)
       {
         // printf("break\n");
         snprintf(last_kmer, kmer_size, "%s", line + i);
@@ -46,6 +48,13 @@ int parse_fasta ( FILE * fd, size_t kmer_size )
           memset(kmer, 0, sizeof(kmer));
           snprintf(kmer, strlen(last_kmer) + 1, "%s", last_kmer);
           strncat(kmer, line, kmer_size - strlen(last_kmer));
+          /* in case that last line of input file has less characters than
+            kmer_size, break at last k-mer. If break statement is missing then
+            the last k-mer won't be of kmer_size length */
+          if(strlen(kmer) < kmer_size)
+          {
+            break;
+          }
           // printf("in else kmer to add: %s\n", kmer);
           check = bloom_add(&bloom, kmer, kmer_size);
           j++;
@@ -63,7 +72,7 @@ int parse_fasta ( FILE * fd, size_t kmer_size )
     }
     first = 0;
   }
-  // printf("right edge kmer to add: %s\n", kmer);
+  printf("right edge kmer to add: %s\n", kmer);
   check = bloom_add(&edge_bloom, kmer, kmer_size);
   if(!line)
   {
@@ -149,7 +158,9 @@ int sparse_fasta ( FILE *fd, size_t kmer_size, uint8_t s )
     }
     for (i = 0; i < len - 1; i++)
     {
-      if(strlen(line + i) - 1 < kmer_size)
+      if(((strlen(line + i) - 1 < kmer_size)
+          || (strlen(line + i) + strlen(last_kmer) - 1 < kmer_size))
+          && first)
       {
         snprintf(last_kmer, kmer_size, "%s", line + i);
         first = 0;
@@ -161,6 +172,7 @@ int sparse_fasta ( FILE *fd, size_t kmer_size, uint8_t s )
         snprintf(kmer, kmer_size+1, "%s", line+i);
         if(!cnt)
         {
+          check = bloom_add(&sparse_bloom, kmer, kmer_size);
           // printf("in first kmer to add: %s\n", kmer);
         }
         cnt++;
@@ -168,7 +180,6 @@ int sparse_fasta ( FILE *fd, size_t kmer_size, uint8_t s )
         {
           cnt = 0;
         }
-        check = bloom_add(&sparse_bloom, kmer, kmer_size);
         snprintf(last_kmer, kmer_size, "%s", line + i);
       }
       else
@@ -180,16 +191,23 @@ int sparse_fasta ( FILE *fd, size_t kmer_size, uint8_t s )
           memset(kmer, 0, sizeof(kmer));
           snprintf(kmer, strlen(last_kmer) + 1, "%s", last_kmer);
           strncat(kmer, line, kmer_size - strlen(last_kmer));
+          /* in case that last line of input file has less characters than
+            kmer_size, break at last k-mer. If break statement is missing then
+            the last k-mer won't be of kmer_size length */
+          if(strlen(kmer) < kmer_size)
+          {
+            break;
+          }
           if(!cnt)
           {
             // printf("in else kmer to add: %s\n", kmer);
+            check = bloom_add(&sparse_bloom, kmer, kmer_size);
           }
           cnt++;
           if(cnt == s+1)
           {
             cnt = 0;
           }
-          check = bloom_add(&sparse_bloom, kmer, kmer_size);
           j++;
           memmove(last_kmer, &(last_kmer[1]), strlen(&(last_kmer[1])));
           last_kmer[kmer_size - j - 1] = '\0';

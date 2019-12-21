@@ -52,10 +52,15 @@ int main (void)
   {
     printf("TTTTTTTATATATAGGGGCC present in edge bloom\n");
   }
-  check = two_sided_contains("CTGCTTTTATTAAGGTCTTG", K);
+  check = two_sided_contains("TTGAGGTCGCAGTGACCCCG", K);
   if(check == 1)
   {
-    printf("CTGCTTTTATTAAGGTCTTG contained in bloom filter\n");
+    printf("TTGAGGTCGCAGTGACCCCG contained in bloom filter\n");
+  }
+  check = two_sided_contains("TCATGATTCGGTACCTGGGT", K);
+  if(check == 1)
+  {
+    printf("TCATGATTCGGTACCTGGGT contained in bloom filter\n");
   }
   fclose(fd);
   bloom_free(&bloom);
