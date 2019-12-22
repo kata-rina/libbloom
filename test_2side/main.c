@@ -9,7 +9,7 @@ int main (void)
   FILE * fd;
   uint64_t fsize;
   unsigned int check = 0;
-  fd = fopen("../test_files/genomic.txt", "r");
+  fd = fopen("../test_files/test.txt", "r");
   if(!fd)
   {
     printf("Unable to open file\n");
@@ -42,25 +42,38 @@ int main (void)
   bloom_print(&bloom);
   bloom_print(&edge_bloom);
   bloom_print(&sparse_bloom);
-  check = bloom_check(&bloom, "TTTTTTTATATATAGGGGCC", K);
-  if(check == 1)
+  // check = bloom_check(&bloom, "TTTTTTTATATATAGGGGCC", K);
+  // if(check == 1)
+  // {
+  //   printf("TTTTTTTATATATAGGGGCC present in bloom\n");
+  // }
+  // check = bloom_check(&edge_bloom, "TTTTTTTATATATAGGGGCC", K);
+  // if(check == 1)
+  // {
+  //   printf("TTTTTTTATATATAGGGGCC present in edge bloom\n");
+  // }
+  // check = two_sided_contains("TTGAGGTCGCAGTGACCCCG", K);
+  // if(check == 1)
+  // {
+  //   printf("TTGAGGTCGCAGTGACCCCG contained in bloom filter\n");
+  // }
+  // check = two_sided_contains("TCATGATTCGGTACCTGGGT", K);
+  // if(check == 1)
+  // {
+  //   printf("TCATGATTCGGTACCTGGGT contained in bloom filter\n");
+  // }
+  // check = two_sided_contains("TTAAAGAGACCGGCGATTCT", K);
+  // if(check == 1)
+  // {
+  //   printf("TTAAAGAGACCGGCGATTCT contained in bloom filter\n");
+  // }
+  char neighbour[K+1];
+  int dist = 1;
+  snprintf(&neighbour[dist], K - dist +1, "%s", "TTAAAGAGACCGGCGATTCT");
+  check = strict_contains_neighbours ("TTAAAGAGACCGGCGATTCT", dist, 1, K, dist, neighbour, 0);
+  if(check)
   {
-    printf("TTTTTTTATATATAGGGGCC present in bloom\n");
-  }
-  check = bloom_check(&edge_bloom, "TTTTTTTATATATAGGGGCC", K);
-  if(check == 1)
-  {
-    printf("TTTTTTTATATATAGGGGCC present in edge bloom\n");
-  }
-  check = two_sided_contains("TTGAGGTCGCAGTGACCCCG", K);
-  if(check == 1)
-  {
-    printf("TTGAGGTCGCAGTGACCCCG contained in bloom filter\n");
-  }
-  check = two_sided_contains("TCATGATTCGGTACCTGGGT", K);
-  if(check == 1)
-  {
-    printf("TCATGATTCGGTACCTGGGT contained in bloom filter\n");
+    printf("TTAAAGAGACCGGCGATTCT present in sparse bloom\n");
   }
   fclose(fd);
   bloom_free(&bloom);

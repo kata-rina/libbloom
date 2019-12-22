@@ -72,7 +72,7 @@ int parse_fasta ( FILE * fd, size_t kmer_size )
     }
     first = 0;
   }
-  printf("right edge kmer to add: %s\n", kmer);
+  // printf("right edge kmer to add: %s\n", kmer);
   check = bloom_add(&edge_bloom, kmer, kmer_size);
   if(!line)
   {
@@ -230,5 +230,41 @@ int sparse_fasta ( FILE *fd, size_t kmer_size, uint8_t s )
     free(line);
   }
   // printf("\n\n***********************************\n\n");
+  return 0;
+}
+
+int strict_contains_neighbours ( char * query, uint8_t dist, uint8_t left,
+                                size_t kmer_size, uint8_t s, char * neighbour, int final_contain )
+{
+  char bases[] = {'A', 'C', 'G', 'T'};
+  int contains;
+  // int final_contain;
+  // char neighbour[kmer_size + 1];
+  if( dist == 0 )
+  {
+    return 0;
+  }
+  if(left)
+  {
+    for(int i = 0; i < sizeof(bases); i++)
+    {
+      // snprintf(&neighbour[s], kmer_size - s + 1, "%s", query);
+      neighbour[s-dist] = bases[i];
+      printf("reconstructed neighbour of %s is %s, with %d dist\n", query,
+              neighbour, dist);
+      if(dist == 1){
+        contains = bloom_check(&sparse_bloom, neighbour, kmer_size);
+        final_contain |= contains;
+        // strict_contains_neighbours(query, dist - 1, left,
+        //                     kmer_size, s, neighbour, final_contain);
+      }
+      strict_contains_neighbours(query, dist - 1, left, kmer_size, s, neighbour, final_contain);
+    }
+    return final_contain;
+  }
+  else
+  {
+
+  }
   return 0;
 }
