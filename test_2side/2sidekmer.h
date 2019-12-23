@@ -17,12 +17,6 @@
 #include <stdint.h>
 
 /*
-    ~ Constant K indicates length of k-mers.
-    !!! needs to be user defined: TO DO !!!
-*/
-#define K       20
-
-/*
     ~ Structure bloom is used for basic bloom-filter which contains all k-mers
     contained in genome sequences.
     ~ Structure edge_bloom is used for bloom-filter which contains only edge

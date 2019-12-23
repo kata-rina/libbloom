@@ -2,7 +2,7 @@
 
 static int strict_contains_neighbours( char * query, uint8_t dist, uint8_t left,
                                 size_t kmer_size, uint8_t s, char * neighbour,
-                                int final_contain );
+                                int * final_contain );
 
 int parse_fasta ( FILE * fd, size_t kmer_size )
 {
@@ -200,7 +200,7 @@ int sparse_fasta ( FILE *fd, size_t kmer_size, uint8_t s )
         if(!cnt || !(cnt % s))
         {
           check = bloom_add(&sparse_bloom, kmer, kmer_size);
-          printf("in first kmer to add: %s\n", kmer);
+          // printf("in first kmer to add: %s\n", kmer);
         }
         cnt++;
         if(cnt == s+1)
@@ -237,7 +237,7 @@ int sparse_fasta ( FILE *fd, size_t kmer_size, uint8_t s )
           }
           if(!cnt || !(cnt % s))
           {
-            printf("in else kmer to add: %s\n", kmer);
+            // printf("in else kmer to add: %s\n", kmer);
             check = bloom_add(&sparse_bloom, kmer, kmer_size);
           }
           cnt++;
@@ -270,30 +270,23 @@ int sparse_fasta ( FILE *fd, size_t kmer_size, uint8_t s )
 
 int strict_contains_neighbours ( char * query, uint8_t dist, uint8_t left,
                                 size_t kmer_size, uint8_t s, char * neighbour,
-                                int final_contain )
+                                int * final_contain )
 {
   char bases[] = {'A', 'C', 'G', 'T'};
   int contains;
   if( dist == 0)
   {
-    if(final_contain)
+    if(*final_contain)
     {
-      printf("return dist 1\n");
       return 1;
     }
     else
     {
-      printf("return dist 0\n");
       return 0;
     }
   }
   for(int i = 0; i < sizeof(bases); i++)
   {
-    if(final_contain)
-    {
-      printf("final_contain if final_contains in for %d\n", final_contain);
-      return 1;
-    }
     if(left)
     {
       neighbour[s-dist] = bases[i];
@@ -304,7 +297,7 @@ int strict_contains_neighbours ( char * query, uint8_t dist, uint8_t left,
     }
     // snprintf(&neighbour[s], kmer_size - s + 1, "%s", query);
     // printf("reconstructed neighbour of %s is %s, with %d dist\n", query,
-            // neighbour, dist);
+    //         neighbour, dist);
     if(dist == 1){
       contains = bloom_check(&sparse_bloom, neighbour, kmer_size);
       if (contains)
@@ -320,23 +313,22 @@ int strict_contains_neighbours ( char * query, uint8_t dist, uint8_t left,
                   neighbour, query);
         }
       }
-      final_contain |= contains;
+      *final_contain |= contains;
       if(contains)
       {
-        printf("final_contain if contains %d\n", final_contain);
         return 1;
       }
     }
     strict_contains_neighbours(query, dist - 1, left, kmer_size, s, neighbour,
                                 final_contain);
   }
-  return final_contain;
+  return *final_contain;
 }
 
 int strict_contains ( char * query, uint8_t s, size_t kmer_size )
 {
   char neighbour[kmer_size + 1];
-  int contains_left, contains_right;
+  int contains_left, contains_right, contains = 0;
   uint8_t i;
   if(bloom_check(&sparse_bloom, query, kmer_size))
   {
@@ -344,10 +336,11 @@ int strict_contains ( char * query, uint8_t s, size_t kmer_size )
   }
   snprintf(&neighbour[s], kmer_size - s + 1, "%s", query);
   contains_left = strict_contains_neighbours(query, s, 1, kmer_size, s,
-                      neighbour, 0);
+                      neighbour, &contains);
   snprintf(neighbour, kmer_size - s + 1, "%s", query+s);
+  contains = 0;
   contains_right = strict_contains_neighbours(query, s, 0, kmer_size, s,
-                      neighbour, 0);
+                      neighbour, &contains);
   if (contains_left && contains_right)
   {
     return 1;
@@ -366,13 +359,14 @@ int strict_contains ( char * query, uint8_t s, size_t kmer_size )
   {
     snprintf(&neighbour[i], kmer_size - i + 1, "%s", query);
     // printf("********* i = %d ***********\n", i);
+    contains = 0;
     contains_left = strict_contains_neighbours(query, i, 1, kmer_size, i,
-                        neighbour, 0);
+                        neighbour, &contains);
     // printf("****************************\n");
     snprintf(neighbour, kmer_size - (s - (i + 1)) + 1, "%s", query+(s - (i)));
+    contains = 0;
     contains_right = strict_contains_neighbours(query, s - (i), 0,
-                        kmer_size, s - (i), neighbour, 0);
-    printf("left %d, right %d\n", contains_left, contains_right);
+                        kmer_size, s - (i), neighbour, &contains);
     if (contains_left && contains_right)
     {
       return 1;
