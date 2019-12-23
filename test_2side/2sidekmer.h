@@ -46,7 +46,6 @@ struct bloom sparse_bloom;
 int parse_fasta ( FILE * fd, size_t kmer_size );
 int two_sided_contains ( char * kmer, size_t kmer_size );
 int sparse_fasta ( FILE *fd, size_t kmer_size, uint8_t s );
-int strict_contains_neighbours ( char * query, uint8_t dist, uint8_t left,
-                                size_t kmer_size, uint8_t s, char * neighbour, int final_contain );
+int strict_contains ( char * query, uint8_t s, size_t kmer_size );
 
 #endif

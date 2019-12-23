@@ -9,6 +9,7 @@ int main (void)
   FILE * fd;
   uint64_t fsize;
   unsigned int check = 0;
+  int dist = 5;
   fd = fopen("../test_files/test.txt", "r");
   if(!fd)
   {
@@ -38,7 +39,7 @@ int main (void)
   }
   parse_fasta(fd, K);
   fseek(fd, 0, SEEK_SET);
-  sparse_fasta(fd, K, 1);
+  sparse_fasta(fd, K, dist);
   bloom_print(&bloom);
   bloom_print(&edge_bloom);
   bloom_print(&sparse_bloom);
@@ -67,13 +68,12 @@ int main (void)
   // {
   //   printf("TTAAAGAGACCGGCGATTCT contained in bloom filter\n");
   // }
-  char neighbour[K+1];
-  int dist = 1;
-  snprintf(&neighbour[dist], K - dist +1, "%s", "TTAAAGAGACCGGCGATTCT");
-  check = strict_contains_neighbours ("TTAAAGAGACCGGCGATTCT", dist, 1, K, dist, neighbour, 0);
+  // char neighbour[K+1];
+  // snprintf(&neighbour[dist], K - dist +1, "%s", "TTAAAGAGACCGGCGATTCT");
+  check = strict_contains ("AAGAGACCGGCGATTCTAGT", dist, K);
   if(check)
   {
-    printf("TTAAAGAGACCGGCGATTCT present in sparse bloom\n");
+    printf("AAGAGACCGGCGATTCTAGT present in sparse bloom\n");
   }
   fclose(fd);
   bloom_free(&bloom);
