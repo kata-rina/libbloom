@@ -1,0 +1,62 @@
+#include <mutate.h>
+
+int mutate ( FILE *fd, size_t kmer_size )
+{
+  FILE *new_fd;
+  uint8_t rnd_idx;
+  unsigned int queries = 0;
+  char *line = NULL, kmer[kmer_size + 2];
+  size_t len = 0;
+  srand(time(0));
+  // fd = fopen("../test_files/test.txt", "r");
+  new_fd = fopen("../test_files/mutate.txt", "w");
+  memset(kmer, '1', sizeof(kmer));
+  while(queries < 1000000)
+  {
+    if(!getline(&line, &len, fd))
+    {
+      fseek(fd, 0, SEEK_SET);
+      getline(&line, &len, fd);
+    }
+    if(strstr(line, ">"))
+    {
+      getline(&line, &len, fd);
+    }
+    if(strlen(line) - 1 < kmer_size)
+    {
+      memset(kmer, '1', sizeof(kmer));
+      fseek(fd, 0, SEEK_SET);
+      continue;
+    }
+    if(strlen(kmer) < kmer_size + 1)
+    {
+      // kmer[strlen(kmer)] = '\0';
+      strncat(kmer, line, sizeof(kmer) - strlen(kmer) - 2);
+      kmer[strlen(kmer)] = '\n';
+      fputs(kmer, new_fd);
+      // printf("kmer in if is %s",  kmer);
+      queries++;
+      fseek(new_fd, 0, SEEK_END);
+    }
+    memset(kmer, 0, sizeof(kmer));
+    rnd_idx = rand() % (strlen(line) - 1);
+    if(strlen(line + rnd_idx) - 1 < kmer_size)
+    {
+      // strncat(kmer, line + rnd_idx, strlen(line + rnd_idx) - 1);
+      snprintf(kmer, strlen(line + rnd_idx), "%s", line + rnd_idx);
+    }
+    else
+    {
+      // strncat(kmer, line + rnd_idx, kmer_size);
+      snprintf(kmer, kmer_size + 1, "%s", line + rnd_idx);
+      kmer[strlen(kmer)] = '\n';
+      fputs(kmer, new_fd);
+      // printf("kmer is %s",  kmer);
+      queries++;
+      fseek(new_fd, 0, SEEK_END);
+    }
+  }
+  // fclose(fd);
+  fclose(new_fd);
+  return queries;
+}
