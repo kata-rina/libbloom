@@ -13,6 +13,9 @@
 */
 #define K       20
 
+int million_two_sided ( FILE * fd, size_t kmer_size );
+int million_strict ( FILE *fd, size_t kmer_size, uint8_t s );
+
 /*
     ~ Structure bloom is used for basic bloom-filter which contains all k-mers
       contained in genome sequences.
@@ -78,6 +81,12 @@ int main (int argc, char ** argv)
   //   return 0;
   // }
   queries = mutate(fd, k);
+  query_fd = fopen("../test_files/mutate.txt", "r");
+  if(!query_fd)
+  {
+    printf("Cannot open file\n");
+    return 0;
+  }
   fseek(fd, 0, SEEK_END);
   fsize = ftell(fd);
   if(fsize < 1000)
@@ -105,9 +114,9 @@ int main (int argc, char ** argv)
   parse_fasta(fd, &bloom, &edge_bloom, k);
   fseek(fd, 0, SEEK_SET);
   sparse_fasta(fd, &sparse_bloom, &edge_bloom, k, dist);
-  bloom_print(&bloom);
-  bloom_print(&edge_bloom);
-  bloom_print(&sparse_bloom);
+  // bloom_print(&bloom);
+  // bloom_print(&edge_bloom);
+  // bloom_print(&sparse_bloom);
   // check = bloom_check(&bloom, "TTTTTTTATATATAGGGGCC", k);
   // if(check == 1)
   // {
@@ -128,20 +137,94 @@ int main (int argc, char ** argv)
   // {
   //   printf("TCATGATTCGGTACCTGGGT contained in bloom filter\n");
   // }
-  // check = two_sided_contains("TTAAAGAGACCGGCGATTCT", &bloom, &edge_bloom, k);
-  // if(check == 1)
-  // {
-  //   printf("TTAAAGAGACCGGCGATTCT contained in bloom filter\n");
-  // }
+  check = two_sided_contains("TGATGTTCGTGCTGATCATG", &bloom, &edge_bloom, k);
+  if(check == 1)
+  {
+    printf("TGATGTTCGTGCTGATCATG contained in bloom filter\n");
+  }
   check = strict_contains (kmer, &sparse_bloom, &edge_bloom, dist, k);
   if(check)
   {
     printf("%s present in sparse bloom\n", kmer);
   }
+  // check = strict_contains("TGATGTTCGTGCTGATCATG", &sparse_bloom, &edge_bloom,
+  //         dist, k);
+  // if(check == 1)
+  // {
+  //   printf("TGATGTTCGTGCTGATCATG contained in sparse bloom\n");
+  // }
+  // check = strict_contains("CAACGGTATCCGCCTGATCG", &sparse_bloom, &edge_bloom,
+  //         dist, k);
+  // if(check == 1)
+  // {
+  //   printf("CAACGGTATCCGCCTGATCG contained in sparse bloom\n");
+  // }
+  // check = strict_contains("CAAAAGGTTGTCGAGAACCG", &sparse_bloom, &edge_bloom,
+  //         dist, k);
+  // if(check == 1)
+  // {
+  //   printf("CAAAAGGTTGTCGAGAACCG contained in sparse bloom\n");
+  // }
+  check = strict_contains("ACTTTGGCAGCAGTGCGTGG", &sparse_bloom, &edge_bloom,
+          dist, k);
+  if(check == 1)
+  {
+    printf("ACTTTGGCAGCAGTGCGTGG contained in sparse bloom\n");
+  }
+  million_two_sided(query_fd, k);
+  printf("%d k-mers present of %d queries in bloom\n", present, queries);
+  fseek(query_fd, 0, SEEK_SET);
+  million_strict(query_fd, k, dist);
+  printf("%d k-mers present of %d strict queries\n", strict_present, queries);
   fclose(fd);
+  if(query_fd)
+  {
+    fclose(query_fd);
+  }
   // fclose(query_fd);
   bloom_free(&bloom);
   bloom_free(&edge_bloom);
   bloom_free(&sparse_bloom);
   return 0;
+}
+
+int million_two_sided ( FILE * fd, size_t kmer_size )
+{
+  // char kmer[kmer_size + 1];
+  char *line = NULL;
+  size_t len = 0;
+  while(getline(&line, &len, fd) != -1)
+  {
+    *(line + kmer_size) = '\0';
+    if(two_sided_contains(line, &bloom, &edge_bloom, kmer_size))
+    {
+      present++;
+    }
+    else
+    {
+      // printf("%s kmer not present\n", line);
+    }
+  }
+  free(line);
+  return present;
+}
+
+int million_strict ( FILE *fd, size_t kmer_size, uint8_t s )
+{
+  char *line = NULL;
+  size_t len = 0;
+  while(getline(&line, &len, fd) != -1)
+  {
+    *(line + kmer_size) = '\0';
+    if(strict_contains(line, &sparse_bloom, &edge_bloom, s, kmer_size))
+    {
+      strict_present++;
+    }
+    else
+    {
+      printf("%s kmer not present\n", line);
+    }
+  }
+  free(line);
+  return strict_present;
 }

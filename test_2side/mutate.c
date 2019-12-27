@@ -13,13 +13,15 @@ int mutate ( FILE *fd, size_t kmer_size )
   memset(kmer, '1', sizeof(kmer));
   while(queries < 1000000)
   {
-    if(!getline(&line, &len, fd))
+    if(getline(&line, &len, fd) == -1)
     {
+      memset(kmer, '1', sizeof(kmer));
       fseek(fd, 0, SEEK_SET);
       getline(&line, &len, fd);
     }
     if(strstr(line, ">"))
     {
+      memset(kmer, '1', sizeof(kmer));
       getline(&line, &len, fd);
     }
     if(strlen(line) - 1 < kmer_size)
@@ -57,6 +59,10 @@ int mutate ( FILE *fd, size_t kmer_size )
     }
   }
   // fclose(fd);
+  if(line)
+  {
+    free(line);
+  }
   fclose(new_fd);
   return queries;
 }
