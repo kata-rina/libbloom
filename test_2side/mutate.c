@@ -1,17 +1,20 @@
 #include <mutate.h>
 
-int mutate ( FILE *fd, size_t kmer_size )
+int mutate ( FILE *fd, size_t kmer_size, uint8_t mutate )
 {
   FILE *new_fd;
   uint8_t rnd_idx;
-  unsigned int queries = 0;
+  unsigned int queries = 0, mutated = 0;
   char *line = NULL, kmer[kmer_size + 2];
   size_t len = 0;
+  char bases[] = {'A', 'C', 'G', 'T'}, base, *base_idx;
+  unsigned int counter = 0, cnts;
   srand(time(0));
-  // fd = fopen("../test_files/test.txt", "r");
   new_fd = fopen("../test_files/mutate.txt", "w");
   memset(kmer, '1', sizeof(kmer));
-  while(queries < 1000000)
+  cnts = rand() % (5) + 1;
+  base = bases[rand() % sizeof(bases)];
+  while(queries < QUERIES)
   {
     if(getline(&line, &len, fd) == -1)
     {
@@ -35,6 +38,19 @@ int mutate ( FILE *fd, size_t kmer_size )
       // kmer[strlen(kmer)] = '\0';
       strncat(kmer, line, sizeof(kmer) - strlen(kmer) - 2);
       kmer[strlen(kmer)] = '\n';
+      if( (counter >= cnts) && mutate )
+      {
+        cnts = rand() % (5) + 1;
+        counter = 0;
+        base_idx = strchr(kmer, base);
+        while(base_idx)
+        {
+          *base_idx = bases[rand() % sizeof(bases)];
+          base_idx = strchr(base_idx, base);
+        }
+        mutated++;
+        base = bases[rand() % sizeof(bases)];
+      }
       fputs(kmer, new_fd);
       // printf("kmer in if is %s",  kmer);
       queries++;
@@ -52,17 +68,30 @@ int mutate ( FILE *fd, size_t kmer_size )
       // strncat(kmer, line + rnd_idx, kmer_size);
       snprintf(kmer, kmer_size + 1, "%s", line + rnd_idx);
       kmer[strlen(kmer)] = '\n';
+      if( (counter >= cnts) && mutate )
+      {
+        cnts = rand() % (5) + 1;
+        counter = 0;
+        base_idx = strchr(kmer, base);
+        while(base_idx)
+        {
+          *base_idx = bases[rand() % sizeof(bases)];
+          base_idx = strchr(base_idx, base);
+        }
+        mutated++;
+        base = bases[rand() % sizeof(bases)];
+      }
       fputs(kmer, new_fd);
       // printf("kmer is %s",  kmer);
       queries++;
       fseek(new_fd, 0, SEEK_END);
     }
+    counter++;
   }
-  // fclose(fd);
   if(line)
   {
     free(line);
   }
   fclose(new_fd);
-  return queries;
+  return mutated;
 }

@@ -14,7 +14,8 @@
 #define K       20
 
 int million_two_sided ( FILE * fd, size_t kmer_size );
-int million_strict ( FILE *fd, size_t kmer_size, uint8_t s );
+int million_strict ( FILE * fd, size_t kmer_size, uint8_t s );
+int million_bloom ( FILE * fd, size_t kmer_size );
 
 /*
     ~ Structure bloom is used for basic bloom-filter which contains all k-mers
@@ -27,7 +28,8 @@ struct bloom bloom;
 struct bloom edge_bloom;
 struct bloom sparse_bloom;
 
-unsigned int queries = 0, present = 0, strict_present = 0;
+unsigned int queries = QUERIES, present = 0, strict_present = 0;
+unsigned int bloom_present = 0;
 
 /* ~ main function can have up to 4 input arguments:
           1. path to file to test upon
@@ -42,7 +44,7 @@ int main (int argc, char ** argv)
 {
   FILE * fd, *query_fd;
   uint64_t fsize;
-  unsigned int check = 0;
+  unsigned int check = 0, mutated = 0;
   int dist = S_DIST;
   int k = K;
   char *kmer = "AAGAGACCGGCGATTCTAGT";
@@ -67,20 +69,10 @@ int main (int argc, char ** argv)
     }
     if(argc > 4)
     {
-      // kmer = argv[4];
       query_fd = fopen(argv[4], "r");
     }
   }
-  // else
-  // {
-  //   query_fd = fopen("../test_files/mil_query.txt", "r");
-  // }
-  // if(!query_fd)
-  // {
-  //   printf("Unable to open query file\n");
-  //   return 0;
-  // }
-  queries = mutate(fd, k);
+  mutated = mutate(fd, k, 1);
   query_fd = fopen("../test_files/mutate.txt", "r");
   if(!query_fd)
   {
@@ -91,22 +83,22 @@ int main (int argc, char ** argv)
   fsize = ftell(fd);
   if(fsize < 1000)
   {
-    fsize *= 1000;
+    fsize *= 10000;
   }
-  // fsize = 10000000;
+  // fsize *= 50;
   printf("Size is %ld\n", fsize);
   fseek(fd, 0, SEEK_SET);
-  if(bloom_init(&bloom, fsize, 0.000001))
+  if(bloom_init(&bloom, fsize, 0.28))
   {
     printf("Bloom not initialized\n");
     return 0;
   }
-  if(bloom_init(&edge_bloom, 200*k, 0.000001))
+  if(bloom_init(&edge_bloom, 20000*k, 0.28))
   {
     printf("Edge bloom not initialized\n");
     return 0;
   }
-  if(bloom_init(&sparse_bloom, fsize/10, 0.000001))
+  if(bloom_init(&sparse_bloom, fsize/(3 + 1), 0.28))
   {
     printf("Sparse bloom not initialized\n");
     return 0;
@@ -114,29 +106,9 @@ int main (int argc, char ** argv)
   parse_fasta(fd, &bloom, &edge_bloom, k);
   fseek(fd, 0, SEEK_SET);
   sparse_fasta(fd, &sparse_bloom, &edge_bloom, k, dist);
-  // bloom_print(&bloom);
-  // bloom_print(&edge_bloom);
-  // bloom_print(&sparse_bloom);
-  // check = bloom_check(&bloom, "TTTTTTTATATATAGGGGCC", k);
-  // if(check == 1)
-  // {
-  //   printf("TTTTTTTATATATAGGGGCC present in bloom\n");
-  // }
-  // check = bloom_check(&edge_bloom, "TTTTTTTATATATAGGGGCC", k);
-  // if(check == 1)
-  // {
-  //   printf("TTTTTTTATATATAGGGGCC present in edge bloom\n");
-  // }
-  // check = two_sided_contains("TTGAGGTCGCAGTGACCCCG", &bloom, &edge_bloom, k);
-  // if(check == 1)
-  // {
-  //   printf("TTGAGGTCGCAGTGACCCCG contained in bloom filter\n");
-  // }
-  // check = two_sided_contains("TCATGATTCGGTACCTGGGT", &bloom, &edge_bloom, k);
-  // if(check == 1)
-  // {
-  //   printf("TCATGATTCGGTACCTGGGT contained in bloom filter\n");
-  // }
+  bloom_print(&bloom);
+  bloom_print(&edge_bloom);
+  bloom_print(&sparse_bloom);
   check = two_sided_contains("TGATGTTCGTGCTGATCATG", &bloom, &edge_bloom, k);
   if(check == 1)
   {
@@ -147,24 +119,6 @@ int main (int argc, char ** argv)
   {
     printf("%s present in sparse bloom\n", kmer);
   }
-  // check = strict_contains("TGATGTTCGTGCTGATCATG", &sparse_bloom, &edge_bloom,
-  //         dist, k);
-  // if(check == 1)
-  // {
-  //   printf("TGATGTTCGTGCTGATCATG contained in sparse bloom\n");
-  // }
-  // check = strict_contains("CAACGGTATCCGCCTGATCG", &sparse_bloom, &edge_bloom,
-  //         dist, k);
-  // if(check == 1)
-  // {
-  //   printf("CAACGGTATCCGCCTGATCG contained in sparse bloom\n");
-  // }
-  // check = strict_contains("CAAAAGGTTGTCGAGAACCG", &sparse_bloom, &edge_bloom,
-  //         dist, k);
-  // if(check == 1)
-  // {
-  //   printf("CAAAAGGTTGTCGAGAACCG contained in sparse bloom\n");
-  // }
   check = strict_contains("ACTTTGGCAGCAGTGCGTGG", &sparse_bloom, &edge_bloom,
           dist, k);
   if(check == 1)
@@ -172,10 +126,16 @@ int main (int argc, char ** argv)
     printf("ACTTTGGCAGCAGTGCGTGG contained in sparse bloom\n");
   }
   million_two_sided(query_fd, k);
-  printf("%d k-mers present of %d queries in bloom\n", present, queries);
+  printf("%d k-mers present of %d queries in bloom with %d mutated\n", present,
+      queries, mutated);
   fseek(query_fd, 0, SEEK_SET);
   million_strict(query_fd, k, dist);
-  printf("%d k-mers present of %d strict queries\n", strict_present, queries);
+  printf("%d k-mers present of %d strict queries with %d mutated\n",
+      strict_present, queries, mutated);
+  fseek(query_fd, 0, SEEK_SET);
+  million_bloom(query_fd, k);
+  printf("%d k-mers present of %d standard queries with %d mutated\n",
+      bloom_present, queries, mutated);
   fclose(fd);
   if(query_fd)
   {
@@ -222,9 +182,29 @@ int million_strict ( FILE *fd, size_t kmer_size, uint8_t s )
     }
     else
     {
-      printf("%s kmer not present\n", line);
+      // printf("%s kmer not present\n", line);
     }
   }
   free(line);
   return strict_present;
+}
+
+int million_bloom ( FILE *fd, size_t kmer_size )
+{
+  char *line = NULL;
+  size_t len = 0;
+  while(getline(&line, &len, fd) != -1)
+  {
+    *(line + kmer_size) = '\0';
+    if(bloom_check(&bloom, line, kmer_size))
+    {
+      bloom_present++;
+    }
+    else
+    {
+      // printf("%s kmer not present\n", line);
+    }
+  }
+  free(line);
+  return bloom_present;
 }

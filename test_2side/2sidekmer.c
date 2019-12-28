@@ -110,6 +110,10 @@ int two_sided_contains ( char * kmer, struct bloom * bloom,
   char tmp_kmer[kmer_size+1];
   uint8_t i, contains_left = 0, contains_right = 0, check;
   // printf("******* Two-sided contains ********\n");
+  if(!bloom_check(bloom, kmer, kmer_size))
+  {
+    return 0;
+  }
   for (i = 0; i < sizeof(bases); i++)
   {
     memset(tmp_kmer, 0, sizeof(tmp_kmer));
@@ -118,13 +122,14 @@ int two_sided_contains ( char * kmer, struct bloom * bloom,
     check = bloom_check(bloom, tmp_kmer, kmer_size);
     if(check)
     {
+      contains_left = 1;
       // printf("right neighbour %s of %s kmer present\n", tmp_kmer, kmer);
+      break;
     }
     // else
     // {
     //   printf("right neighbour %s of %s kmer not present\n", tmp_kmer, kmer);
     // }
-    contains_right |= check;
   }
   for (i = 0; i < sizeof(bases); i++)
   {
@@ -134,13 +139,14 @@ int two_sided_contains ( char * kmer, struct bloom * bloom,
     check = bloom_check(bloom, tmp_kmer, kmer_size);
     if(check)
     {
+      contains_right = 1;
       // printf("left neighbour %s of %s kmer present\n", tmp_kmer, kmer);
+      break;
     }
     // else
     // {
     //   printf("left neighbour %s of %s kmer not present\n", tmp_kmer, kmer);
     // }
-    contains_left |= check;
   }
   if (contains_left && contains_right)
   {
@@ -200,7 +206,7 @@ int sparse_fasta ( FILE *fd, struct bloom * sparse_bloom,
       if(first)
       {
         snprintf(kmer, kmer_size+1, "%s", line+i);
-        if(!(cnt % s))
+        if(((s == 1) && !(cnt % 2)) || ((s != 1) && !(cnt % (s + 1))))
         {
           check = bloom_add(sparse_bloom, kmer, kmer_size);
           // printf("in first kmer to add: %s\n", kmer);
@@ -208,7 +214,14 @@ int sparse_fasta ( FILE *fd, struct bloom * sparse_bloom,
         cnt++;
         if(cnt == s+1)
         {
-          cnt = 1;
+          // if(s == 1)
+          // {
+            cnt = 0;
+          // }
+          // else
+          // {
+          //   cnt = 1;
+          // }
         }
         snprintf(last_kmer, kmer_size + 1, "%s", line + i - 1);
         snprintf(edge_kmer, kmer_size + 1, "%s", kmer);
@@ -238,7 +251,7 @@ int sparse_fasta ( FILE *fd, struct bloom * sparse_bloom,
           {
             break;
           }
-          if(!(cnt % s))
+          if(((s == 1) && !(cnt % 2)) || ((s != 1) && !(cnt % (s + 1))))
           {
             // printf("last_kmer %s\n", last_kmer);
             // printf("in else kmer to add: %s\n", kmer);
@@ -247,7 +260,7 @@ int sparse_fasta ( FILE *fd, struct bloom * sparse_bloom,
           cnt++;
           if(cnt == s+1)
           {
-            cnt = 1;
+            cnt = 0;
           }
           snprintf(edge_kmer, kmer_size + 1, "%s", kmer);
         }
@@ -335,17 +348,30 @@ int strict_contains ( char * query, struct bloom * sparse_bloom,
   char neighbour[kmer_size + 1];
   int contains_left = 0, contains_right = 0, contains = 0;
   uint8_t i;
+  // if(bloom_check(sparse_bloom, query, kmer_size))
+  // {
+  //   return 1;
+  // }
   if(bloom_check(sparse_bloom, query, kmer_size))
   {
-    return 1;
+    snprintf(&neighbour[s+1], kmer_size - s, "%s", query);
+    contains_left = strict_contains_neighbours(query, sparse_bloom, s+1, 1,
+          kmer_size, s+1, neighbour, &contains);
+    snprintf(neighbour, kmer_size - s, "%s", query+s+1);
+    contains = 0;
+    contains_right = strict_contains_neighbours(query, sparse_bloom, s+1, 0,
+          kmer_size, s+1, neighbour, &contains);
   }
-  snprintf(&neighbour[s], kmer_size - s + 1, "%s", query);
-  contains_left = strict_contains_neighbours(query, sparse_bloom, s, 1,
-        kmer_size, s, neighbour, &contains);
-  snprintf(neighbour, kmer_size - s + 1, "%s", query+s);
-  contains = 0;
-  contains_right = strict_contains_neighbours(query, sparse_bloom, s, 0,
-        kmer_size, s, neighbour, &contains);
+  else
+  {
+    snprintf(&neighbour[s], kmer_size - s + 1, "%s", query);
+    contains_left = strict_contains_neighbours(query, sparse_bloom, s, 1,
+          kmer_size, s, neighbour, &contains);
+    snprintf(neighbour, kmer_size - s + 1, "%s", query+s);
+    contains = 0;
+    contains_right = strict_contains_neighbours(query, sparse_bloom, s, 0,
+          kmer_size, s, neighbour, &contains);
+  }
   if (contains_left && contains_right)
   {
     // printf("contains and\n");
@@ -385,22 +411,19 @@ int strict_contains ( char * query, struct bloom * sparse_bloom,
     {
       return 1;
     }
-    else
+    if (contains_left || contains_right)
     {
-      if (contains_left || contains_right)
+      if(bloom_check(edge_bloom, query, kmer_size))
       {
-        if(bloom_check(edge_bloom, query, kmer_size))
-        {
-          return 1;
-        }
+        return 1;
       }
-      if(contains_right)
+    }
+    if(contains_right)
+    {
+      // printf("contains right\n");
+      if(bloom_check(edge_bloom, neighbour, kmer_size))
       {
-        // printf("contains right\n");
-        if(bloom_check(edge_bloom, neighbour, kmer_size))
-        {
-          return 1;
-        }
+        return 1;
       }
     }
   }
