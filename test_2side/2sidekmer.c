@@ -304,6 +304,10 @@ static int strict_contains_neighbours ( char * query,
   }
   for(int i = 0; i < sizeof(bases); i++)
   {
+    if(*final_contain)
+    {
+      return 1;
+    }
     if(left)
     {
       neighbour[s-dist] = bases[i];
@@ -348,12 +352,9 @@ int strict_contains ( char * query, struct bloom * sparse_bloom,
   char neighbour[kmer_size + 1];
   int contains_left = 0, contains_right = 0, contains = 0;
   uint8_t i;
-  // if(bloom_check(sparse_bloom, query, kmer_size))
-  // {
-  //   return 1;
-  // }
   if(bloom_check(sparse_bloom, query, kmer_size))
   {
+    contains = 0;
     snprintf(&neighbour[s+1], kmer_size - s, "%s", query);
     contains_left = strict_contains_neighbours(query, sparse_bloom, s+1, 1,
           kmer_size, s+1, neighbour, &contains);
@@ -361,52 +362,43 @@ int strict_contains ( char * query, struct bloom * sparse_bloom,
     contains = 0;
     contains_right = strict_contains_neighbours(query, sparse_bloom, s+1, 0,
           kmer_size, s+1, neighbour, &contains);
-  }
-  else
-  {
-    snprintf(&neighbour[s], kmer_size - s + 1, "%s", query);
-    contains_left = strict_contains_neighbours(query, sparse_bloom, s, 1,
-          kmer_size, s, neighbour, &contains);
-    snprintf(neighbour, kmer_size - s + 1, "%s", query+s);
-    contains = 0;
-    contains_right = strict_contains_neighbours(query, sparse_bloom, s, 0,
-          kmer_size, s, neighbour, &contains);
-  }
-  if (contains_left && contains_right)
-  {
-    // printf("contains and\n");
-    return 1;
-  }
-  if (contains_left || contains_right)
-  {
-    // printf("contains or\n");
-    if(bloom_check(edge_bloom, query, kmer_size))
+    if (contains_left && contains_right)
     {
+      // printf("contains and\n");
       return 1;
     }
-    if(contains_right)
+    if (contains_left || contains_right)
     {
-      // printf("contains right\n");
-      if(bloom_check(edge_bloom, neighbour, kmer_size))
+      // printf("contains or\n");
+      if(bloom_check(edge_bloom, query, kmer_size))
       {
         return 1;
       }
+      if(contains_right)
+      {
+        // printf("contains right\n");
+        if(bloom_check(edge_bloom, neighbour, kmer_size))
+        {
+          return 1;
+        }
+      }
     }
   }
+  contains_left = contains_right = 0;
   for (i = 0; i < s; i++)
   {
     // printf("********* i = %d ***********\n", i);
     contains = 0;
-    snprintf(&neighbour[i], kmer_size - i + 1, "%s", query);
+    snprintf(&neighbour[i+1], kmer_size - i, "%s", query);
     // printf("first naighbour %s of %s for %d\n", neighbour, query, i);
-    contains_left = strict_contains_neighbours(query, sparse_bloom, i, 1,
-          kmer_size, i, neighbour, &contains);
-    // printf("****************************\n");
+    contains_left = strict_contains_neighbours(query, sparse_bloom, i+1, 1,
+          kmer_size, i+1, neighbour, &contains);
     snprintf(neighbour, kmer_size - (s - (i + 1)), "%s", query+(s - (i)));
     // printf("first naighbour %s of %s for %d\n", neighbour, query, i);
     contains = 0;
     contains_right = strict_contains_neighbours(query, sparse_bloom, s - (i), 0,
         kmer_size, s - (i), neighbour, &contains);
+    // printf("****************************\n");
     if (contains_left && contains_right)
     {
       return 1;

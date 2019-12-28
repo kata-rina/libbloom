@@ -54,6 +54,10 @@ int mutate ( FILE *fd, size_t kmer_size, uint8_t mutate )
       fputs(kmer, new_fd);
       // printf("kmer in if is %s",  kmer);
       queries++;
+      if(queries == QUERIES)
+      {
+        break;
+      }
       fseek(new_fd, 0, SEEK_END);
     }
     memset(kmer, 0, sizeof(kmer));

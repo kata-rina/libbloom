@@ -98,7 +98,7 @@ int main (int argc, char ** argv)
     printf("Edge bloom not initialized\n");
     return 0;
   }
-  if(bloom_init(&sparse_bloom, fsize/(3 + 1), 0.28))
+  if(bloom_init(&sparse_bloom, fsize, 0.28))
   {
     printf("Sparse bloom not initialized\n");
     return 0;
