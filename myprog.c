@@ -11,6 +11,8 @@ int main(void){
   buff_len = strlen(buffer);
 
   bloom_init(&bloom_filter, 10000, 0.01);
+  bloom_print(&bloom_filter);
+
   bloom_add(&bloom_filter, buffer, buff_len);
 
   if (bloom_check(&bloom_filter, buffer, buff_len)){

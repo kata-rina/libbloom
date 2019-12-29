@@ -198,13 +198,13 @@ test_prog.o : bloom.o myprog.o ./murmur2/MurmurHash2.o
 				$(CC) -g $^ -o $@ -lm
 
 bloom.o : bloom.c
-				$(CC) $(INC) $(CFLAGS) -c bloom.c -o bloom.o -lm
+				$(CC) $(INC) $(CFLAGS) -g -c bloom.c -o bloom.o -lm
 
 myprog.o : myprog.c
-				$(CC) $(INC) $(CFLAGS) -c myprog.c -o myprog.o
+				$(CC) $(INC) $(CFLAGS) -g -c myprog.c -o myprog.o
 
 ./murmur2/MurmurHash2.o : ./murmur2/MurmurHash2.c
-				$(CC) $(INC) $(CFLAGS) -c ./murmur2/MurmurHash2.c -o ./murmur2/MurmurHash2.o -lm
+				$(CC) $(INC) $(CFLAGS) -g -c ./murmur2/MurmurHash2.c -o ./murmur2/MurmurHash2.o -lm
 
 clean:
 	rm -f ./*.o
