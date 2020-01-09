@@ -302,7 +302,7 @@ static int strict_contains_neighbours ( char * query,
       return 0;
     }
   }
-  for(int i = 0; i < sizeof(bases); i++)
+  for(unsigned int i = 0; i < sizeof(bases); i++)
   {
     if(*final_contain)
     {
@@ -352,6 +352,10 @@ int strict_contains ( char * query, struct bloom * sparse_bloom,
   char neighbour[kmer_size + 1];
   int contains_left = 0, contains_right = 0, contains = 0;
   uint8_t i;
+  if(bloom_check(sparse_bloom, query, kmer_size))
+  {
+    return 1;
+  }
   if(bloom_check(sparse_bloom, query, kmer_size))
   {
     contains = 0;

@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <mutate.h>
+#include <sys/time.h>
+#include <time.h>
 
 #define S_DIST          1
 
@@ -35,7 +37,7 @@ unsigned int bloom_present = 0;
           1. path to file to test upon
           2. size of one k-mer (k)
           3. s distance
-          4. query to find
+          4. 0 - don't mutate, 1 - mutate
   ~ if there isn't enough arguments, code will process data with hard coded
     constants, k will be 20 and s will be 1.
   ~ usage example: ./test ../test_files/test.txt 20 1 "AAGAGACCGGCGATTCTAGT" */
@@ -44,10 +46,14 @@ int main (int argc, char ** argv)
 {
   FILE * fd, *query_fd;
   uint64_t fsize;
-  unsigned int check = 0, mutated = 0;
+  unsigned int mutated = 0;
   int dist = S_DIST;
-  int k = K;
-  char *kmer = "AAGAGACCGGCGATTCTAGT";
+  int k = K, mut = 1;
+  // char *kmer = "AAGAGACCGGCGATTCTAGT";
+  long init_before, init_after, parse_before, parse_after;
+  long query_before, query_after;
+  int parse_time;
+  struct timeval tp;
   if(argc > 1)
   {
     fd = fopen(argv[1], "r");
@@ -69,10 +75,15 @@ int main (int argc, char ** argv)
     }
     if(argc > 4)
     {
-      query_fd = fopen(argv[4], "r");
+      mut = atoi(argv[4]);
+      if (mut != 1 && mut != 0)
+      {
+        printf("Argument 4 must be 0 or 1\n");
+        return 0;
+      }
     }
   }
-  mutated = mutate(fd, k, 1);
+  mutated = mutate(fd, k, mut);
   query_fd = fopen("../test_files/mutate.txt", "r");
   if(!query_fd)
   {
@@ -85,9 +96,12 @@ int main (int argc, char ** argv)
   {
     fsize *= 10000;
   }
-  // fsize *= 50;
-  printf("Size is %ld\n", fsize);
+  fsize *= 2;
+  // printf("Size is %ld\n", fsize);
+  gettimeofday(&tp, NULL);
+  long before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   fseek(fd, 0, SEEK_SET);
+  init_before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   if(bloom_init(&bloom, fsize, 0.28))
   {
     printf("Bloom not initialized\n");
@@ -98,44 +112,80 @@ int main (int argc, char ** argv)
     printf("Edge bloom not initialized\n");
     return 0;
   }
+  printf("Size of bloom filter is %ld\n", fsize);
+  gettimeofday(&tp, NULL);
+  init_after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  printf("********************Simple bloom query*********************\n");
+  parse_before = init_after;
+  parse_fasta(fd, &bloom, &edge_bloom, k);
+  gettimeofday(&tp, NULL);
+  parse_after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  fseek(query_fd, 0, SEEK_SET);
+  gettimeofday(&tp, NULL);
+  query_before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  million_bloom(query_fd, k);
+  gettimeofday(&tp, NULL);
+  query_after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  gettimeofday(&tp, NULL);
+  long after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  printf("  Finished in %d ms\n  Query time is %d ms\n", (int) (after - before),
+      (int)(query_after - query_before));
+  printf("%d k-mers present of %d standard queries with %d mutated\n",
+      bloom_present, queries, mutated);
+  printf("**********************2-sided query***********************\n");
+  fseek(query_fd, 0, SEEK_SET);
+  gettimeofday(&tp, NULL);
+  before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  million_two_sided(query_fd, k);
+  gettimeofday(&tp, NULL);
+  after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  parse_time = (int) (init_after - init_before + parse_after - parse_before +
+      after - before);
+  printf("  Finished in %d ms\n  Query time is %d ms\n", parse_time,
+      (int) (after - before));
+  printf("%d k-mers present of %d queries in bloom with %d mutated\n", present,
+      queries, mutated);
+  printf("***********************Strict query************************\n");
+  gettimeofday(&tp, NULL);
+  before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   if(bloom_init(&sparse_bloom, fsize, 0.28))
   {
     printf("Sparse bloom not initialized\n");
     return 0;
   }
-  parse_fasta(fd, &bloom, &edge_bloom, k);
   fseek(fd, 0, SEEK_SET);
   sparse_fasta(fd, &sparse_bloom, &edge_bloom, k, dist);
-  bloom_print(&bloom);
-  bloom_print(&edge_bloom);
-  bloom_print(&sparse_bloom);
-  check = two_sided_contains("TGATGTTCGTGCTGATCATG", &bloom, &edge_bloom, k);
-  if(check == 1)
-  {
-    printf("TGATGTTCGTGCTGATCATG contained in bloom filter\n");
-  }
-  check = strict_contains (kmer, &sparse_bloom, &edge_bloom, dist, k);
-  if(check)
-  {
-    printf("%s present in sparse bloom\n", kmer);
-  }
-  check = strict_contains("ACTTTGGCAGCAGTGCGTGG", &sparse_bloom, &edge_bloom,
-          dist, k);
-  if(check == 1)
-  {
-    printf("ACTTTGGCAGCAGTGCGTGG contained in sparse bloom\n");
-  }
-  million_two_sided(query_fd, k);
-  printf("%d k-mers present of %d queries in bloom with %d mutated\n", present,
-      queries, mutated);
   fseek(query_fd, 0, SEEK_SET);
+  gettimeofday(&tp, NULL);
+  parse_before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   million_strict(query_fd, k, dist);
+  gettimeofday(&tp, NULL);
+  parse_after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  gettimeofday(&tp, NULL);
+  after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  printf("  Finished in %d ms\n  Query time is %d ms\n", (int) (after - before),
+      (int)(parse_after - parse_before));
   printf("%d k-mers present of %d strict queries with %d mutated\n",
       strict_present, queries, mutated);
-  fseek(query_fd, 0, SEEK_SET);
-  million_bloom(query_fd, k);
-  printf("%d k-mers present of %d standard queries with %d mutated\n",
-      bloom_present, queries, mutated);
+  // bloom_print(&bloom);
+  // bloom_print(&edge_bloom);
+  // bloom_print(&sparse_bloom);
+  // check = two_sided_contains("TGATGTTCGTGCTGATCATG", &bloom, &edge_bloom, k);
+  // if(check == 1)
+  // {
+  //   printf("TGATGTTCGTGCTGATCATG contained in bloom filter\n");
+  // }
+  // check = strict_contains (kmer, &sparse_bloom, &edge_bloom, dist, k);
+  // if(check)
+  // {
+  //   printf("%s present in sparse bloom\n", kmer);
+  // }
+  // check = strict_contains("ACTTTGGCAGCAGTGCGTGG", &sparse_bloom, &edge_bloom,
+  //         dist, k);
+  // if(check == 1)
+  // {
+  //   printf("ACTTTGGCAGCAGTGCGTGG contained in sparse bloom\n");
+  // }
   fclose(fd);
   if(query_fd)
   {
