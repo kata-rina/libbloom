@@ -96,7 +96,7 @@ int main (int argc, char ** argv)
   {
     fsize *= 10000;
   }
-  fsize *= 2;
+  fsize *= 4;
   // printf("Size is %ld\n", fsize);
   gettimeofday(&tp, NULL);
   long before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
@@ -130,6 +130,7 @@ int main (int argc, char ** argv)
   long after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   printf("  Finished in %d ms\n  Query time is %d ms\n", (int) (after - before),
       (int)(query_after - query_before));
+  printf("FPR is %f\n", (float)(-(queries-mutated-bloom_present)/(float)queries));
   printf("%d k-mers present of %d standard queries with %d mutated\n",
       bloom_present, queries, mutated);
   printf("**********************2-sided query***********************\n");
@@ -143,12 +144,13 @@ int main (int argc, char ** argv)
       after - before);
   printf("  Finished in %d ms\n  Query time is %d ms\n", parse_time,
       (int) (after - before));
+  printf("FPR is %f\n", (float)(-(queries-mutated-present)/(float)queries));
   printf("%d k-mers present of %d queries in bloom with %d mutated\n", present,
       queries, mutated);
   printf("***********************Strict query************************\n");
   gettimeofday(&tp, NULL);
   before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
-  if(bloom_init(&sparse_bloom, fsize, 0.28))
+  if(bloom_init(&sparse_bloom, fsize/1.5, 0.28))
   {
     printf("Sparse bloom not initialized\n");
     return 0;
@@ -165,6 +167,7 @@ int main (int argc, char ** argv)
   after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   printf("  Finished in %d ms\n  Query time is %d ms\n", (int) (after - before),
       (int)(parse_after - parse_before));
+  printf("FPR is %f\n", (float)(-(queries-mutated-strict_present)/(float)queries));
   printf("%d k-mers present of %d strict queries with %d mutated\n",
       strict_present, queries, mutated);
   // bloom_print(&bloom);
@@ -174,6 +177,10 @@ int main (int argc, char ** argv)
   // if(two_sided_contains("TGATGTTCGTGCTGATCATG", &bloom, &edge_bloom, k))
   // {
   //   printf("TGATGTTCGTGCTGATCATG contained in bloom filter\n");
+  // }
+  // if(two_sided_contains("CTTTGGCAGCAGTGCGTGGA", &bloom, &edge_bloom, k))
+  // {
+  //   printf("CTTTGGCAGCAGTGCGTGGA contained in bloom filter\n");
   // }
   // check = strict_contains (kmer, &sparse_bloom, &edge_bloom, dist, k);
   // if(check)
