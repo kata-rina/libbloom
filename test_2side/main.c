@@ -171,7 +171,7 @@ int main (int argc, char ** argv)
   // bloom_print(&edge_bloom);
   // bloom_print(&sparse_bloom);
   // check = two_sided_contains("TGATGTTCGTGCTGATCATG", &bloom, &edge_bloom, k);
-  // if(check == 1)
+  // if(two_sided_contains("TGATGTTCGTGCTGATCATG", &bloom, &edge_bloom, k))
   // {
   //   printf("TGATGTTCGTGCTGATCATG contained in bloom filter\n");
   // }
@@ -180,9 +180,10 @@ int main (int argc, char ** argv)
   // {
   //   printf("%s present in sparse bloom\n", kmer);
   // }
-  // check = strict_contains("ACTTTGGCAGCAGTGCGTGG", &sparse_bloom, &edge_bloom,
+  // check = strict_contains("AACTTTGGCAGCAGTGCGTG", &sparse_bloom, &edge_bloom,
   //         dist, k);
-  // if(check == 1)
+  // if(strict_contains("ACTTTGGCAGCAGTGCGTGG", &sparse_bloom, &edge_bloom,
+  //         dist, k))
   // {
   //   printf("ACTTTGGCAGCAGTGCGTGG contained in sparse bloom\n");
   // }
