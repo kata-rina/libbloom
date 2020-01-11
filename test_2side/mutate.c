@@ -12,7 +12,8 @@ int mutate ( FILE *fd, size_t kmer_size, uint8_t mutate )
   srand(time(0));
   new_fd = fopen("../test_files/mutate.txt", "w");
   memset(kmer, '1', sizeof(kmer));
-  cnts = rand() % (5) + 1;
+  // cnts = rand() % (2) + 1;
+  cnts = ((3*QUERIES/4));
   base = bases[rand() % sizeof(bases)];
   while(queries < QUERIES)
   {
@@ -38,10 +39,10 @@ int mutate ( FILE *fd, size_t kmer_size, uint8_t mutate )
       // kmer[strlen(kmer)] = '\0';
       strncat(kmer, line, sizeof(kmer) - strlen(kmer) - 2);
       kmer[strlen(kmer)] = '\n';
-      if( (counter >= cnts) && mutate )
+      if( (counter < cnts) && mutate )
       {
-        cnts = rand() % (5) + 1;
-        counter = 0;
+        // cnts = rand() % (2) + 1;
+        counter++;
         base_idx = strchr(kmer, base);
         while(base_idx)
         {
@@ -72,10 +73,10 @@ int mutate ( FILE *fd, size_t kmer_size, uint8_t mutate )
       // strncat(kmer, line + rnd_idx, kmer_size);
       snprintf(kmer, kmer_size + 1, "%s", line + rnd_idx);
       kmer[strlen(kmer)] = '\n';
-      if( (counter >= cnts) && mutate )
+      if( (counter < cnts) && mutate )
       {
-        cnts = rand() % (5) + 1;
-        counter = 0;
+        // cnts = rand() % (2) + 1;
+        counter++;
         base_idx = strchr(kmer, base);
         while(base_idx)
         {
@@ -90,7 +91,7 @@ int mutate ( FILE *fd, size_t kmer_size, uint8_t mutate )
       queries++;
       fseek(new_fd, 0, SEEK_END);
     }
-    counter++;
+    // counter++;
   }
   if(line)
   {
