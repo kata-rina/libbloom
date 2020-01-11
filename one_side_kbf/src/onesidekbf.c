@@ -12,21 +12,27 @@
 #include<string.h>
 #include<bloom.h>
 #include<onesidekbf.h>
+#include<mutate.h>
 
-/* Function adds k-mers in bloomfilter */
-int genom_add(FILE * fp, int kmer_size, struct bloom * bloom){
+/* Function parses fasta file and adds k-mers in bloomfilter */
+int parse_fasta(FILE * fp, int kmer_size, struct bloom * bloom){
 
   ssize_t read;
   size_t len = 0;
   char *line = NULL;
   char sequence[kmer_size];
   char previous_sequence[kmer_size];
+  int first_line;
+  int cnt;
+
+  int added=0; // counter of added kmers in bloom filter
+
+  printf("Parsing fasta format and storing to bloom filter......\n");
 
   memset( sequence, 0, kmer_size*sizeof(char) );
   memset( previous_sequence, 0, kmer_size*sizeof(char) );
 
-  int first_line = 1;
-  int cnt;
+
 
   // read line by line
   while( ( read = getline( &line, &len, fp ) ) != -1 ){
@@ -34,7 +40,11 @@ int genom_add(FILE * fp, int kmer_size, struct bloom * bloom){
     line[strcspn( line, "\n" )] = 0; // remove end of line char
     cnt = 0; // counter of read characters
 
-    // read first kmer from file
+    if ( strchr(line, '>') ){
+      first_line = 1;
+      continue;}
+
+    // read first kmer from each read
     if ( first_line ){
       first_line = 0;
 
@@ -44,7 +54,7 @@ int genom_add(FILE * fp, int kmer_size, struct bloom * bloom){
         *line++;
       }
 
-      bloom_add( bloom, sequence, kmer_size );
+      if (bloom_add( bloom, sequence, kmer_size ) == 0) { added++;}
 
       cnt += kmer_size;
 
@@ -60,8 +70,7 @@ int genom_add(FILE * fp, int kmer_size, struct bloom * bloom){
 
       sequence[ kmer_size - 1 ] = *line++;
 
-      bloom_add( bloom, sequence, kmer_size );
-      // printf("%s\n", sequence);
+      if (bloom_add( bloom, sequence, kmer_size ) == 0) {added++;}
       cnt++;
 
       for ( int i = 0; i < kmer_size; i++ ){
@@ -72,14 +81,18 @@ int genom_add(FILE * fp, int kmer_size, struct bloom * bloom){
 
     // restore pointer to line
     line = line - read + 1;
+    // if (added == QUERIES) {
+    //
+    //   break;}
   }
 
+  printf("* %d kmers added to bloom filter\n\n", added);
   free( line );
   return 1;
   }
 
-/* This function checks whether bloom filter contains kmer or not */
-int onesided_kbf_check( char *kmer, int kmer_size, struct bloom * bloom ){
+/* This function checks whether one sided bloom filter contains kmer or not */
+int onesided_kbf_contains( char *kmer, int kmer_size, struct bloom * bloom ){
 
       if ( bloom_check( bloom, kmer, kmer_size) == 1 ){
 
@@ -88,19 +101,12 @@ int onesided_kbf_check( char *kmer, int kmer_size, struct bloom * bloom ){
 
         char left_neighbour[kmer_size];
         memset( left_neighbour, 0, kmer_size*sizeof(char) );
-        snprintf( left_neighbour, kmer_size + 1, "%s", kmer);
+        snprintf( &left_neighbour[1], kmer_size, "%s", kmer);
 
-        for (i = kmer_size - 1; i > 0; i--){
-          left_neighbour[i] = left_neighbour[i-1];
-        }
 
         char right_neighbour[kmer_size];
         memset( right_neighbour, 0, kmer_size*sizeof(char) );
-        snprintf( right_neighbour, kmer_size + 1, "%s", kmer);
-
-        for (i = 0; i < kmer_size; i++){
-          right_neighbour[i] = right_neighbour[i+1];
-        }
+        snprintf( right_neighbour, kmer_size, "%s", &kmer[1]);
 
 
         // check for presence of neighbouring kmers
@@ -108,7 +114,6 @@ int onesided_kbf_check( char *kmer, int kmer_size, struct bloom * bloom ){
             left_neighbour[0] = dna_base[i];
             right_neighbour[kmer_size - 1] = dna_base[i];
 
-            // check for presence of the left neighbour
             if ( bloom_check( bloom, left_neighbour, kmer_size) == 1 ) {return 1;}
             if ( bloom_check( bloom, right_neighbour, kmer_size) == 1) {return 1;}
           }
