@@ -4,6 +4,6 @@
 #include <string.h>
 #include <time.h>
 
-#define QUERIES           5600000
+#define QUERIES           1000000
 
 int mutate ( FILE *fd, size_t kmer_size, uint8_t mutate );

@@ -86,7 +86,7 @@ int parse_fasta(FILE * fp, int kmer_size, struct bloom * bloom){
     //   break;}
   }
 
-  printf("* %d kmers added to bloom filter\n\n", added);
+  printf("* %d kmers added to bloom filter\n", added);
   free( line );
   return 1;
   }
