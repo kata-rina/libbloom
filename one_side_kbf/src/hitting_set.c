@@ -9,7 +9,7 @@
 #include<hitting_set.h>
 
 // returns head of the list of kmers
-kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f){
+kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bloom * bloom){
 
   printf("Parsing fasta format.....\n");
 
@@ -32,7 +32,9 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f){
   char *line = NULL;
 
   char *no_left = "NNNN";
+  int n = 0;
 
+  int end_flag = 0;
 
   memset( sequence, 0, kmer_size*sizeof(char) );
   memset( previous_sequence, 0, kmer_size*sizeof(char) );
@@ -64,8 +66,8 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f){
 
       // add sequencies to head
       if(line_cnt == 1){
-        kmer_node_t *head = NULL;
-        head = (kmer_node_t *) malloc(sizeof(kmer_node_t));
+        // kmer_node_t *head = NULL;
+        // head = (kmer_node_t *) malloc(sizeof(kmer_node_t));
         head->current_kmer = malloc(sizeof(char)*kmer_size);
         head->previous_kmers = malloc(sizeof(char)*kmer_size);
         head->next_kmers = malloc(sizeof(char)*kmer_size);
@@ -76,6 +78,12 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f){
         head->next_count = 1;
         head->previous_count = 0;
 
+        bloom_add( bloom, sequence, kmer_size );
+        n++;
+        printf("%d)%s\n", n, previous_sequence);
+        printf("%d)%s\n", n, sequence);
+        printf("%d)%s\n", n, next_sequence);
+
       }
 
       // if its not first kmer from file to add, update list of kmers but do
@@ -83,10 +91,16 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f){
       else{
 
         add_to_list( sequence, no_left, next_sequence, kmer_size, head);
+        bloom_add( bloom, sequence, kmer_size );
+        n++;
+        printf("%d)%s\n",n, sequence);
 
       }
 
       cnt += kmer_size;
+      for (int i = 0; i < kmer_size; i++){
+        *line++;
+      }
 
     }
 
@@ -98,15 +112,22 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f){
       snprintf( sequence, kmer_size, "%s", &next_sequence[1]);
       sequence[kmer_size - 1] = *line++;
       cnt++;
+      // if (cnt == read){break;}
 
       snprintf( next_sequence, kmer_size, "%s", &sequence[1]);
       next_sequence[kmer_size -1] = *line++;
+
       cnt++;
 
       add_to_list(sequence, previous_sequence, next_sequence, kmer_size, head);
+      bloom_add( bloom, sequence, kmer_size );
+      n++;
+      printf("%d)%s\n", n, previous_sequence);
+      printf("%d)%s\n", n, sequence);
+      printf("%d)%s\n", n, next_sequence);
 
     }
-
+    // *line++;
 
     // restore pointer to line
     line = line - read + 1;
@@ -166,7 +187,7 @@ void add_to_list(char *kmer, char *left, char *right, int kmer_size, kmer_node_t
 
     current->next->next_count = 1;
 
-    current->next->previous_kmer = malloc(sizeof(char)*kmer_size);
+    current->next->previous_kmers = malloc(sizeof(char)*kmer_size);
     if(strcmp(left, no_left)){
       snprintf(current->next->previous_kmers, kmer_size + 1, "%s", left);
       current->next->previous_count = 1;

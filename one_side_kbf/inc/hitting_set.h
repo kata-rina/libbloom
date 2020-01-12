@@ -17,7 +17,7 @@ typedef struct kmer_node {
 } kmer_node_t;
 
 
-kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f);
+kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f, struct bloom * bloom);
 void add_to_list(char *kmer, char *left, char *right, int kmer_size, kmer_node_t *head);
 int check_presence(char *data_set, char *query, int query_length);
 

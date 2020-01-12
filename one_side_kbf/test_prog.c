@@ -137,29 +137,58 @@ int main(void){
   //=================================================================================
 
   // create head
-  char * example = "Mislav";
-  char * example1 = "katarina";
-  kmer_node_t *head = NULL;
-
-  head = (kmer_node_t *) malloc(sizeof(kmer_node_t));
-  head->current_kmer = malloc(sizeof(char)*KMER_SIZE);
-  head->previous_kmers = malloc(sizeof(char)*KMER_SIZE);
-  head->next_kmers = malloc(sizeof(char)*KMER_SIZE);
-
-  head->current_kmer = example;
-  head->previous_kmers = example;
-  head->next_kmers = example;
-  head->previous_count = 1;
-  head->next_count = 1;
-  head->next = NULL;
-
-  add_to_list(example1, example1, example1, KMER_SIZE, head);
-  add_to_list(example1, example1, example, KMER_SIZE, head);
+  // char * example = "Mislav";
+  // char * example1 = "katarina";
+  // kmer_node_t *head = NULL;
+  //
+  // head = (kmer_node_t *) malloc(sizeof(kmer_node_t));
+  // head->current_kmer = malloc(sizeof(char)*KMER_SIZE);
+  // head->previous_kmers = malloc(sizeof(char)*KMER_SIZE);
+  // head->next_kmers = malloc(sizeof(char)*KMER_SIZE);
+  //
+  // head->current_kmer = example;
+  // head->previous_kmers = example;
+  // head->next_kmers = example;
+  // head->previous_count = 1;
+  // head->next_count = 1;
+  // head->next = NULL;
+  //
+  // add_to_list(example1, example1, example1, KMER_SIZE, head);
+  // add_to_list(example1, example1, example, KMER_SIZE, head);
 
   //=================================================================================
   //=================================================================================
   //=================================================================================
 
+  // for time stats
+  struct timeval tstart, tstop;
+
+  // file to read from
+  FILE *f;
+  int fsize;
+  char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/sparse.txt";
+  f = fopen(filename, "r");
+
+  fseek(f, 0, SEEK_END);
+  fsize = ftell(f);
+  fseek(f, 0, SEEK_SET);
+
+  // init bloom filter to store kmers
+  struct bloom bloom_filter;
+  bloom_init(&bloom_filter, fsize*10000, 0.255);
+  bloom_print(&bloom_filter);
+  int a = 1;
+  parse_hitting_set(KMER_SIZE, a, f, &bloom_filter);
+
+  char *buff =  "TTTAAAGAGACCGGCGATTC";
+  char *buff2 = "TAAAGAGACCGGCGATTCTA";
+  char *buff3 = "CCTTCCTGAGCGAAGCCTGG";
+  if (bloom_check(&bloom_filter, buff, KMER_SIZE) == 1)
+    printf("ja sam unutra\n");
+  if(bloom_check(&bloom_filter, buff2, KMER_SIZE) == 1)
+    printf("i ja sam unutra\n");
+  if(bloom_check(&bloom_filter, buff3, KMER_SIZE) == 1)
+    printf("treci je unutra\n");
 
   return 0;
 }
