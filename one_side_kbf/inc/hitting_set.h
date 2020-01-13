@@ -12,7 +12,7 @@ typedef struct kmer_node {
   int previous_count;
   int next_count;
   struct kmer_node *next;
-  struct kmer_node *previous;
+  // struct kmer_node *previous;
 
 } kmer_node_t;
 
