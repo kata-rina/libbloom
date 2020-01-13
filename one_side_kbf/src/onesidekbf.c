@@ -49,10 +49,10 @@ int parse_fasta(FILE * fp, int kmer_size, struct bloom * bloom){
       first_line = 0;
 
       snprintf( sequence, kmer_size + 1, "%s", line );
-
-      for ( int i=0; i<kmer_size; i++ ){
-        *line++;
-      }
+      line = line + kmer_size;
+      // for ( int i=0; i<kmer_size; i++ ){
+      //   *line++;
+      // }
 
       if (bloom_add( bloom, sequence, kmer_size ) == 0) { added++;}
 

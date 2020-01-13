@@ -176,20 +176,11 @@ int main(void){
   // init bloom filter to store kmers
   struct bloom bloom_filter;
   bloom_init(&bloom_filter, fsize*10000, 0.255);
-  bloom_print(&bloom_filter);
+  // bloom_print(&bloom_filter);
   int a = 1;
   parse_hitting_set(KMER_SIZE, a, f, &bloom_filter);
 
-  char *buff =  "TTTAAAGAGACCGGCGATTC";
-  char *buff2 = "TAAAGAGACCGGCGATTCTA";
-  char *buff3 = "CCTTCCTGAGCGAAGCCTGG";
-  if (bloom_check(&bloom_filter, buff, KMER_SIZE) == 1)
-    printf("ja sam unutra\n");
-  if(bloom_check(&bloom_filter, buff2, KMER_SIZE) == 1)
-    printf("i ja sam unutra\n");
-  if(bloom_check(&bloom_filter, buff3, KMER_SIZE) == 1)
-    printf("treci je unutra\n");
-
+  fclose(f);
   return 0;
 }
 
