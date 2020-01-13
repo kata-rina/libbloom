@@ -182,14 +182,16 @@ int main(void){
 
   char *buff =  "TTTAAAGAGACCGGCGATTC";
   char *buff2 = "TAAAGAGACCGGCGATTCTA";
-  char *buff3 = "CCTTCCTGAGCGAAGCCTGG";
+  char *buff3 = "CGTAATAGATAGATACAAGG";
+  char *buff4 = "TAATAGATAGATACAAGGAA";
   if (bloom_check(&bloom_filter, buff, KMER_SIZE) == 1)
     printf("ja sam unutra\n");
   if(bloom_check(&bloom_filter, buff2, KMER_SIZE) == 1)
     printf("i ja sam unutra\n");
   if(bloom_check(&bloom_filter, buff3, KMER_SIZE) == 1)
     printf("treci je unutra\n");
-
+  if(bloom_check(&bloom_filter, buff4, KMER_SIZE) == 1)
+    printf("cetvrti je unutra\n");
   return 0;
 }
 

@@ -48,15 +48,17 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bl
 
     if ( strchr(line, '>') ){
       first_line = 1;
+      line_cnt = 0;
       continue;}
     else{
       line_cnt++;
+      printf("broj linije = %d\n", line_cnt);
+
     }
 
+    printf("addr of line at the begginig %p\n", (void *)&line);
     // read first kmer from each read
     if ( first_line ){
-      first_line = 0;
-
       // read first kmer - this kmer has no left neighbour
       snprintf( sequence, kmer_size + 1, "%s", line );
       *line++;
@@ -98,22 +100,30 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bl
       }
 
       cnt += kmer_size;
-      for (int i = 0; i < kmer_size; i++){
-        *line++;
-      }
+      line = line + kmer_size;
 
     }
 
+    if ((!first_line) && (line_cnt == 2)){
+        next_sequence[kmer_size -1] = *line;
+        n++;
+        printf("tu smo\n" );
+        // cnt++;
+        printf("%d)%s\n", n, previous_sequence);
+        printf("%d)%s\n", n, sequence);
+        printf("%d)%s\n", n, next_sequence);
+        add_to_list(sequence, previous_sequence, next_sequence, kmer_size, head);
+        bloom_add( bloom, sequence, kmer_size );
+        *line++;
+    }
 
-    while (cnt < read - 1){
+    while (cnt < read - 2){
 
       snprintf( previous_sequence, kmer_size + 1, "%s", next_sequence );
 
       snprintf( sequence, kmer_size, "%s", &next_sequence[1]);
       sequence[kmer_size - 1] = *line++;
       cnt++;
-      // if (cnt == read){break;}
-
       snprintf( next_sequence, kmer_size, "%s", &sequence[1]);
       next_sequence[kmer_size -1] = *line++;
 
@@ -127,13 +137,20 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bl
       printf("%d)%s\n", n, next_sequence);
 
     }
-    // *line++;
 
+    if(first_line){
+      first_line = 0;
+      snprintf( sequence, kmer_size, "%s", &next_sequence[1]);
+      sequence[kmer_size - 1] = *line++;
+      snprintf( previous_sequence, kmer_size + 1, "%s", next_sequence );
+      snprintf( next_sequence, kmer_size, "%s", &sequence[1]);
+
+    }
     // restore pointer to line
-    line = line - read + 1;
+    // line = line - rsead + 2;
 
   }
-
+  // free(line);
   return head;
 }
 
