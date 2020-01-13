@@ -102,7 +102,7 @@ int main (int argc, char ** argv)
   long before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   fseek(fd, 0, SEEK_SET);
   init_before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
-  if(bloom_init(&bloom, fsize, 0.28))
+  if(bloom_init(&bloom, fsize, 0.29))
   {
     printf("Bloom not initialized\n");
     return 0;

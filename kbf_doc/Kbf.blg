@@ -1,0 +1,53 @@
+This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: Kbf.aux
+The style file: fer.bst
+Database file #1: literatura.bib
+Warning--to sort, need author, organization, or key in bloom_filter
+Warning--to sort, need author, organization, or key in kmer
+Warning--to sort, need author or key in kbf
+Warning--empty year in bloom_filter
+Warning--empty author in kbf
+Warning--empty journal in kbf
+You've used 3 entries,
+            2773 wiz_defined-function locations,
+            605 strings with 5294 characters,
+and the built_in function-call counts, 750 in all, are:
+= -- 73
+> -- 0
+< -- 0
++ -- 3
+- -- 0
+* -- 59
+:= -- 77
+add.period$ -- 7
+call.type$ -- 3
+change.case$ -- 7
+chr.to.int$ -- 3
+cite$ -- 15
+duplicate$ -- 53
+empty$ -- 94
+format.name$ -- 0
+if$ -- 168
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 1
+newline$ -- 21
+num.names$ -- 0
+pop$ -- 31
+preamble$ -- 1
+purify$ -- 6
+quote$ -- 0
+skip$ -- 37
+stack$ -- 0
+substring$ -- 9
+swap$ -- 4
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 33
+warning$ -- 6
+while$ -- 0
+width$ -- 0
+write$ -- 37
+(There were 6 warnings)

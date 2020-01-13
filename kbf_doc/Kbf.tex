@@ -1,0 +1,201 @@
+\documentclass[times, utf8, seminar, numeric]{fer}
+\usepackage{booktabs}
+\usepackage{tabu, multirow}
+% \usepackage{float}
+% \usepackage{array}
+\usepackage{tabularx}
+\usepackage{algorithmicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+% \usepackage[]{algorithm2e}
+% \usepackage[linesnumbered,lined,boxed,commentsnumbered]{algorithm2e}
+
+\renewcommand{\labelitemi}{$\circ$}
+
+\begin{document}
+% \lstset{language=c}
+
+% TODO: Navedite naslov rada.
+\title{Poboljšanje Bloom filtra korištenjem k-mer Bloom filtra}
+
+% TODO: Navedite vaše ime i prezime.
+\author{Magdalena Halusek i Katarina Prgeša}
+
+% TODO: Navedite ime i prezime mentora.
+\voditelj{Mirjana Domazet-Lošo}
+
+\maketitle
+
+\tableofcontents
+
+\chapter{Uvod}
+Bloom filtar je podatkovna struktura koja memorijski efikasno određuje nalazi li
+se traženi element u određenom setu ili ne \cite{bloom_filter}. Glavni nedostatak
+Bloom filtra je što odgovor na upit postojanja elementa u setu može biti ili da
+se definitivno ne nalazi u setu ili da se možda nalazi. Drugim riječima, Bloom
+filtar ne može dati pozitivan odgovor s potpunom sigurnošću. Razlog tome je što
+se za unošenje elemenata u Bloom filtar i za njihovo traženje koriste hash
+funkcije. Prilikom unošenja i traženja elemenata, hash funkcije vraćaju indekse
+koji se kod unošenja koriste za postavljanje '1' na pozicijama koje
+odgovaraju dobivenim indeksima. Kod provjere postojanja elementa u nizu, gledaju
+se vrijednosti na dobivenim indeksima. Ako je na jednom od dobivenih indeksa
+postavljena '0', tada Bloom filtar vraća negativni odgovor na postojanje elementa
+u nizu, a ako je na svakom od indeksa vrijednost '1', tada se u nizu nalazi
+traženi element ili neki drugi element koji bi dao istu kombinaciju indeksa.
+Mjera kojom se izražava nesigurnost pozitivnog odgovora koji daje Bloom filtar
+naziva se lažno-pozitivna mjera te će se u nastavku koristiti kratica FPR koja
+dolazi od engleskog naziva (\textit{False Positive Rate}).
+U nastavku će biti prikazano kako smanjiti FPR koji daje Bloom filtar korištenjem
+k-mera, gdje k-mer označava jedan niz od k elemenata (A, C, G i T) \cite{kmer}.
+Pošto se u bioinformatici radi s velikom količinom podataka, u interesu je
+smanjiti memorijsko opterećenje te će u nastavku biti opisano i kako se korištenjem
+k-mera mogu poboljšati memorijske performase.
+
+\chapter{Smanjenje FPR-a korištenjem k-mera}
+Kod korištenja k-mera, ulazni niz se obrađuje na način da se od početka sekvence
+uzme jedan podniz duljine k (jedan k-mer) i stavi se u Bloom filtar. Sljedeći
+podniz se dobije na način da se od početka ulaznog niza pomakne za jedan znak
+prema kraju niza i stavi se u Bloom filtar. Bloom filtar se tako puni sve dok se
+ne dođe do kraja ulaznog niza.
+Glavna ideja kod smanjenja FPR-a stoji iza činjenice da se u Bloom filtru nalaze
+odabrani k-mer te k-mer koji mu neposredno prethodi i k-mer koji ga neposredno
+slijedi \cite{kbf}. U daljnjem tekstu, k-mer koji neposredno prethodi nekom
+drugom k-meru će se zvati lijevi susjed, a k-mer koji neposredno slijedi isti
+k-mer će se zvati desni susjed. Dakle, kao dodatna provjera postojanje odabranog
+k-mera u Bloom filtru svakako može poslužiti i provjera postojanja desnog ili
+lijevog susjeda promatranog k-mera. Navedena provjera se može podijeliti na dva
+pristupa:
+\begin{itemize}
+  \item{jednostrani k-mer Bloom filtar}
+  \item{dvostrani k-mer Bloom filtar.}
+\end{itemize}
+
+\section{Jednostrani k-mer Bloom filtar}
+Jednostrani k-mer Bloom filtar se temelji na provjeri koja mora rezultirati
+pozitivnim odgovorom u barem 2 slučaja:
+\begin{itemize}
+  \item{promatrani k-mer se nalazi u Bloom filtru}
+  \item{jedan od susjeda promatranog k-mera se nalazi u Bloom filtru}
+\end{itemize}
+Za potrebe navedene provjere, potrebno je rekonstruirati sve moguće susjede
+promatranog k-mera te za svaki od njih posebno provjeriti njihovo pojavljivanje
+u Bloom filtru. Lijevi susjedi se mogu dobiti dodavanjem jedne baze na početak
+promatranog k-mera te oduzimanjem jedne baze koja se nalazi na posljednjem indeksu
+promatranog k-mera. Desni susjedi se mogu dobiti oduzimanjem jedne baze na početku
+promatranog k-mera i dodavanjem jedne baze na kraj k-mera.\\
+\textit{Primjer 1.} Ako je odabran 8-mer, čija se prisutnost u Bloom filtru želi
+provjeriti, AACCTTGG, njegovi lijevi susjedi bi bili:
+\begin{itemize}
+  \item{AAACCTTG}
+  \item{CAACCTTG}
+  \item{GAACCTTG}
+  \item{TAACCTTG}
+\end{itemize}
+Desni susjedi navedenog 8-mera bi bili:
+\begin{itemize}
+  \item{ACCTTGGA}
+  \item{ACCTTGGC}
+  \item{ACCTTGGG}
+  \item{ACCTTGGT}
+\end{itemize}
+
+% \begin{algorithm}
+%   \caption{One sided kbf}
+%   \begin{algorithmic}[1]
+%     \Function{ONE_SIDED_KBF_CONTAINS}{query}
+%     \Statex
+%     \EndFunction
+%   \end{algorithmic}
+% \end{algorithm}
+
+\section{Dvostrani k-mer Bloom filtar}
+Za razliku od jednostranog k-mer Bloom filtra, dvostrani k-mer Bloom filtar mora
+rezultirati pozitivnim odgovorom u 3 slučaja:
+\begin{itemize}
+  \item{promatrani k-mer se nalazi u Bloom filtru}
+  \item{lijevi susjed k-mera se nalazi u Bloom filtru}
+  \item{desni susjed k-mera se nalazi u Bloom filtru}
+\end{itemize}
+Pošto kod dvostranog k-mer Bloom filtra oba susjeda promatranog k-mera moraju biti
+prisutni, dvostrani k-mer Bloom filtar ima jednu iznimku, a to je u slučaju kada
+se promatrani k-mer nalazi na rubu sekvence. Takvi k-meri se nazivaju rubni k-meri
+te moraju biti spremljeni zasebno. Ako se radi o iznimci, dvostrani k-mer Bloom
+filtar mora dati pozitivne odgovore u sljedeća 3 slučaja:
+\begin{itemize}
+  \item{promatrani k-mer se nalazi u Bloom filtru}
+  \item{jedan od susjeda se nalazi u Bloom filtru}
+  \item{promatrani k-mer je rubni k-mer}
+\end{itemize}
+
+\chapter{Princip preklapanja sekvenci za smanjenje k-mer setova}
+Korištenje k-mera u obradi velike količine podataka može biti memorijski zahtjevno
+te se zbog toga radi na smanjenju broja k-mera koji moraju biti spremljeni u
+Bloom filtar. Jedan od načina na koji se to može postići je korištenje svojstva
+preklapanja sekvenci.\\
+Prije objašnjenja navedenog načina, potrebno je definirati sljedeće oznake:
+\begin{itemize}
+  \item{{$U$} - set k-mera koje treba pohraniti}
+  \item{{$k$} - jedan k-mer iz {$U$}}
+  \item{{$L_k$} - set k-mera koji se u {$U$} nalaze prije {$k$}}
+  \item{{$R_k$} - set k-mera koji se u {$U$} nalaze nakon {$k$}}
+\end{itemize}
+Smanjenje broja k-mera koje treba pohraniti se postiže na način:\\
+Ako sigurno postoji jedan k-mer u {$L_k$} i jedan k-mer u {$R_k$}, tada se može
+potvrditi postojanje k-mera {$k$} iz prisutnosti {$v$} {$\in$} {$L_k$} i
+{$w$} {$\in$} {$R_k$}, bez potrebe za pohranom {$k$}.\\
+\textit{Primjer 2.} Ako je promatrani 8-mer {$k$}~=~AACCTTGG te njegovi susjedi
+{$v$}~=~TAACCTTG i {$w$}~=~ACCTTGGA, tada se do željenog k-mera {$k$} može doći
+kombinacijom {$v$} i {$w$}.
+Kako bi se stvarno moglo kombinacijom {$v$} i {$w$} doći do {$k$} postoji jedan
+uvjet za koji je potrebno definirati dodatne oznake:
+\begin{itemize}
+  \item{{$P_{vk}$} - skup pozicija lijevih susjeda {$v$}}
+  \item{{$P_{vk}$} - skup pozicija desnih susjeda {$w$}}
+  \item{{$S_{k}(v,w)$} - udaljenost između odgovarajućih pozicija lijevih i
+    desnih susjeda}
+  \item{{$s$} - broj k-merova koje je dopušteno preskočiti}
+\end{itemize}
+Definiranjem potrebnih oznaka uvjet se može opisati s \ref{distance}.
+\begin{equation}
+  \label{distance}
+  min(S_k(v,w)) \leq s
+\end{equation}
+Navedeni uvjet se može rastaviti na dva problema.\\
+\textit{Problem 1: Opušteni problem smanjenja k-mer setova}\nopagebreak\\
+Iz zadanog skupa k-mera {$U$} treba pronaći mali podskup {$K \subset U$} za sve
+{$k \in U$}, bilo da je {$k \in K$} ili postoje {$v \in K \cap L_k$} i
+{$w \in K \cap R_k$} za koje vrijedi {$min(S_k(v,w)) \leq s$}.
+\textit{Problem 2: Strogi problem smanjenja k-mer setova}\nopagebreak\\
+Iz zadanog skupa k-mera {$U$} treba pronaći mali podskup {$K \subset U$} za sve
+{$k \in U$}, bilo da je {$k \in K$} ili postoje {$v \in K \cap L_k$} i
+{$w \in K \cap R_k$} za koje vrijedi {$min(S_k(v,w)) = s$}.\\
+Kao rješenja na navedene probleme predstavljaju se tri pristupa:
+\begin{itemize}
+  \item{\textit{Pristup 1: Pristup najboljeg podudaranja indeksa} - Podskup {$K$}
+  se gradi pohlepno tako da se uzima svaki s-ti k-mer iz ulaznog niza {$U$} od točno
+  određenog indeksa {$i_r$}. Indeks {$i_r$} se određuje tako da je najveće
+  preklapanje k-mera s dosadašnjim podskupom {$K$}. Ulazni niz je dobiven
+  očitavanjima i {$s$} je proizvoljan.}
+  \item{\textit{Pristup 2: Pristup podudarajućeg seta} - Podskup {$K$}
+  se gradi pohlepno tako da se za svaki k-mer iz ulaznog niza {$U$} zapamti
+  podskup lijevih susjeda {$L_k$} i desnih susjeda {$R_k$} k-mera {$k$} te se u
+  {$K$} pohrane k-meri koji se nalaze u najviše setova {$R_k$} i {$L_k$}.
+  Ulazni niz je dobiven očitavanjima i {$s = 1$}.}
+  \item{\textit{Pristup 3: Pristup jedinstvene sekvence} - Podskup {$K$} se gradi
+  tako da se iz ulaznog niza uzme svaki s-ti k-mer počevši od nulte pozicije.
+  Ovaj pristup se koristi kod slučaja gdje je ulazni niz poznat (cijeli genom) te
+  je {$s$} proizvoljan.}
+\end{itemize}
+
+\chapter{Usporedba rezultata}
+
+\chapter{Zaključak}
+Zaključak.
+
+\bibliography{literatura}
+\bibliographystyle{fer}
+
+\chapter{Sažetak}
+Sažetak.
+
+\end{document}
