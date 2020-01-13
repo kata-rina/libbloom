@@ -128,6 +128,7 @@ int two_sided_contains ( char * kmer, struct bloom * bloom,
       // printf("right neighbour of %s is %s\n", kmer, right_kmer);
       if(bloom_check(bloom, right_kmer, kmer_size))
       {
+        // printf("right neighbour %s of %s kmer present\n", right_kmer, kmer);
         if(contains_left) return 1;
         contains_right = 1;
         // if(bloom_check(edge_bloom, kmer, kmer_size)) return 1;
@@ -141,6 +142,7 @@ int two_sided_contains ( char * kmer, struct bloom * bloom,
       // printf("left neighbour of %s is %s\n", kmer, left_kmer);
       if(bloom_check(bloom, left_kmer, kmer_size))
       {
+        // printf("left neighbour of %s is %s\n", kmer, left_kmer);
         if(contains_right) return 1;
         contains_left = 1;
         // if(bloom_check(edge_bloom, kmer, kmer_size)) return 1;
