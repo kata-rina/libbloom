@@ -1,16 +1,21 @@
 \documentclass[times, utf8, seminar, numeric]{fer}
 \usepackage{booktabs}
 \usepackage{tabu, multirow}
+\usepackage{tabularx}
 % \usepackage{float}
-% \usepackage{array}
+\usepackage{array}
 \usepackage{tabularx}
 \usepackage{algorithmicx}
 \usepackage{algorithm}
-\usepackage{algpseudocode}
-% \usepackage[]{algorithm2e}
-% \usepackage[linesnumbered,lined,boxed,commentsnumbered]{algorithm2e}
+\usepackage[noend]{algpseudocode}
+% \usepackage[utf8]{inputenc}
+% \usepackage[T1]{fontenc}
+% \usepackage[croatian]{babel}
 
 \renewcommand{\labelitemi}{$\circ$}
+\makeatletter
+\renewcommand{\ALG@name}{Algoritam}
+\makeatother
 
 \begin{document}
 % \lstset{language=c}
@@ -98,15 +103,27 @@ Desni susjedi navedenog 8-mera bi bili:
   \item{ACCTTGGG}
   \item{ACCTTGGT}
 \end{itemize}
+Opisani postupak se može prikazati algoritmom \ref{one_alg}.
 
-% \begin{algorithm}
-%   \caption{One sided kbf}
-%   \begin{algorithmic}[1]
-%     \Function{ONE_SIDED_KBF_CONTAINS}{query}
-%     \Statex
-%     \EndFunction
-%   \end{algorithmic}
-% \end{algorithm}
+\begin{algorithm}[H]
+  \caption{Jednostrani k-mer Bloom filtar \cite{kbf}}
+  \label{one_alg}
+  \begin{algorithmic}[1]
+    \Function{One\_sided\_kBF\_contains}{$query$}
+      \If{\Call{BF.contains}{$query$}}
+        \State{\textbf{return} \Call{contains\_set}{neighbour\_set($query$)}}
+      \EndIf
+      \State{\textbf{return false}}
+    \EndFunction\\
+    \Function{contains\_set}{$set$}
+      \For{$kmer \in set$}
+        \If{\Call{BF.contains}{$kmer$}}
+          \State{\textbf{return true}}
+        \EndIf
+      \EndFor
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
 
 \section{Dvostrani k-mer Bloom filtar}
 Za razliku od jednostranog k-mer Bloom filtra, dvostrani k-mer Bloom filtar mora
@@ -126,6 +143,27 @@ filtar mora dati pozitivne odgovore u sljedeća 3 slučaja:
   \item{jedan od susjeda se nalazi u Bloom filtru}
   \item{promatrani k-mer je rubni k-mer}
 \end{itemize}
+Opisani postupak se može prikazati algoritmom \ref{two_alg}.
+
+\begin{algorithm}[H]
+  \caption{Dvostrani k-mer Bloom filtar \cite{kbf}}
+  \label{two_alg}
+  \begin{algorithmic}[1]
+    \Function{Two\_sided\_kBF\_contains}{$query$}
+      \State $contains\_left \gets$ \Call{contains\_set}{left\_neighbour\_set($query$)}
+      \State $contains\_right \gets$ \Call{contains\_set}{right\_neighbour\_set($query$)}
+      \If{$contains\_left == 1$ \textbf{and} $contains\_right == 1$}
+        \State{\textbf{return true}}
+      \EndIf
+      \If{$contains\_left == 1$ \textbf{or} $contains\_right == 1$}
+        \If{\Call{edge\_k-mer\_set.contains}{$query$}}
+          \State{\textbf{return true}}
+        \EndIf
+      \EndIf
+      \State{\textbf{return false}}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
 
 \chapter{Princip preklapanja sekvenci za smanjenje k-mer setova}
 Korištenje k-mera u obradi velike količine podataka može biti memorijski zahtjevno
@@ -150,26 +188,96 @@ Kako bi se stvarno moglo kombinacijom {$v$} i {$w$} doći do {$k$} postoji jedan
 uvjet za koji je potrebno definirati dodatne oznake:
 \begin{itemize}
   \item{{$P_{vk}$} - skup pozicija lijevih susjeda {$v$}}
-  \item{{$P_{vk}$} - skup pozicija desnih susjeda {$w$}}
+  \item{{$A_{kw}$} - skup pozicija desnih susjeda {$w$}}
   \item{{$S_{k}(v,w)$} - udaljenost između odgovarajućih pozicija lijevih i
     desnih susjeda}
   \item{{$s$} - broj k-merova koje je dopušteno preskočiti}
 \end{itemize}
+$S_{k}(v,w)$ je opisan s \ref{S_def}.
+\begin{equation}
+  \label{S_def}
+  S_k(v,w) = \{i_w - i_v~|~i_v \in P_{vk}, i_w \in A_{kw}\}
+\end{equation}
 Definiranjem potrebnih oznaka uvjet se može opisati s \ref{distance}.
 \begin{equation}
   \label{distance}
   min(S_k(v,w)) \leq s
 \end{equation}
 Navedeni uvjet se može rastaviti na dva problema.\\
-\textit{Problem 1: Opušteni problem smanjenja k-mer setova}\nopagebreak\\
+\textit{Problem 1: Opušteni problem smanjenja k-mer setova (algoritam \ref{rel_alg})}\nopagebreak\\
 Iz zadanog skupa k-mera {$U$} treba pronaći mali podskup {$K \subset U$} za sve
 {$k \in U$}, bilo da je {$k \in K$} ili postoje {$v \in K \cap L_k$} i
-{$w \in K \cap R_k$} za koje vrijedi {$min(S_k(v,w)) \leq s$}.
-\textit{Problem 2: Strogi problem smanjenja k-mer setova}\nopagebreak\\
+{$w \in K \cap R_k$} za koje vrijedi {$min(S_k(v,w)) \leq s$}.\\
+\textit{Problem 2: Strogi problem smanjenja k-mer setova (algoritam \ref{str_alg})}\nopagebreak\\
 Iz zadanog skupa k-mera {$U$} treba pronaći mali podskup {$K \subset U$} za sve
 {$k \in U$}, bilo da je {$k \in K$} ili postoje {$v \in K \cap L_k$} i
 {$w \in K \cap R_k$} za koje vrijedi {$min(S_k(v,w)) = s$}.\\
-Kao rješenja na navedene probleme predstavljaju se tri pristupa:
+
+\begin{algorithm}[H]
+  \caption{Opušteni problem smanjenja k-mer setova \cite{kbf}}
+  \label{rel_alg}
+  \algnewcommand\algorithmicto{\textbf{to}}
+  \begin{algorithmic}[1]
+    \Function{Decide\_present}{$query, contains\_left, contains\_right$}
+      \If{$contains\_left == 1$ \textbf{and} $contains\_right == 1$}
+        \State{\textbf{return true}}
+      \EndIf
+      \If{$contains\_left == 1$ \textbf{or} $contains\_right == 1$}
+        \If{\Call{edge\_k-mer\_set.contains}{$query$}}
+          \State{\textbf{return true}}
+        \EndIf
+      \EndIf
+      \State{\textbf{return false}}
+    \EndFunction\\
+    \Function{relaxed\_contains\_neighbours}{$query, l\_dist, r\_dist$}
+      \State $contains\_left \gets$ \Call{contains\_set}{$\bigcup\limits_{i \le l\_dist}$s\_distant\_left\_neighbour\_set($query, i$)}
+      \State $contains\_right \gets$ \Call{contains\_set}{$\bigcup\limits_{i \le r\_dist}$s\_distant\_right\_neighbour\_set($query, i$)}
+      \State \textbf{return} \Call{Decide\_present}{$query, contains\_left, contains\_right$}
+    \EndFunction\\
+    \Function{relaxed\_contains}{$query, s$}
+      \If{\Call{BF.contains}{$query$}}
+        \If{\Call{relaxed\_contains\_neighbours}{$query, s, s$}}
+          \State{\textbf{return true}}
+        \EndIf
+      \Else
+        \For{$i \gets 0~\algorithmicto\ s-1$}
+          \If{\Call{relaxed\_contains\_neighbours}{$query, i, s - (i + 1)$}}
+            \State{\textbf{return true}}
+          \EndIf
+        \EndFor
+      \EndIf
+      \State{\textbf{return false}}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+  \caption{Strogi problem smanjenja k-mer setova \cite{kbf}}
+  \label{str_alg}
+  \algnewcommand\algorithmicto{\textbf{to}}
+  \begin{algorithmic}[1]
+    \Function{strict\_contains\_neighbours}{$query, l\_dist, r\_dist$}
+      \State $contains\_left \gets$ \Call{contains\_set}{s\_distant\_left\_neighbour\_set($query, l\_dist$)}
+      \State $contains\_right \gets$ \Call{contains\_set}{s\_distant\_right\_neighbour\_set($query, r\_dist$)}
+      \State \textbf{return} \Call{Decide\_present}{$query, contains\_left, contains\_right$}
+    \EndFunction\\
+    \Function{strict\_contains}{$query, s$}
+      \If{\Call{BF.contains}{$query$}}
+        \If{\Call{strict\_contains\_neighbours}{$query, s, s$}}
+          \State{\textbf{return true}}
+        \EndIf
+      \EndIf
+      \For{$i \gets 0~\algorithmicto\ s-1$}
+        \If{\Call{strict\_contains\_neighbours}{$query, i, s - (i + 1)$}}
+          \State{\textbf{return true}}
+        \EndIf
+      \EndFor
+      \State{\textbf{return false}}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+Kao rješenja na navedene probleme navode se tri pristupa:
 \begin{itemize}
   \item{\textit{Pristup 1: Pristup najboljeg podudaranja indeksa} - Podskup {$K$}
   se gradi pohlepno tako da se uzima svaki s-ti k-mer iz ulaznog niza {$U$} od točno
@@ -188,14 +296,92 @@ Kao rješenja na navedene probleme predstavljaju se tri pristupa:
 \end{itemize}
 
 \chapter{Usporedba rezultata}
+Rezultati prikazani u ovom poglavlju, dobiveni su testiranjem nad genomom
+Pseudomonas aeruginosa. Prilikom implementacije jednostranog i dvostranog k-mer
+Bloom filtra, ulazna datoteka se je parsirala tako da se iz datoteke čitala linija
+po linija te se svaki k-mer stavljao u Bloom filtar. Kod dvostranog k-mer Bloom
+filtra su se dodatno spremali i rubni k-meri u poseban Bloom filtar. Odabrani
+parametri nad kojima se je testiralo su:
+\begin{itemize}
+  \item{$k = 20$}
+  \item{$s = 1$}
+\end{itemize}
+Pošto je testiranje provedeno nas cijelim genomom, parsiranje ulazne datoteke za
+slučaj smanjenja zauzeća memorije za Bloom filtar je izvedeno na način da se iz
+ulaznog niza uzeo svaki s-ti k-mer, počevši od nultog indeksa.
+Savaka implementacija se je testirala nad istim skupom podataka koji se sastoji
+od milijun k-mera. Skup k-mera je dobiven tako da se iz ulazne datoteke nasumično
+izabralo milijun k-mera i od njih se 3/4 mutiralo na način da se nasumično izabrala
+jedna baza u pojedinom k-meru i zamijenila se s drugom nasumično izabranom bazom.
+
+\begin{table}[H]
+  \centering
+  \caption{Vremensko izvođenje implementacija}
+  \begin{tabular}{|| p{2.7cm} | p{2cm} | p{2cm} | p{2cm} | p{2cm} ||}
+    \hline
+    Skup podataka & 1-kBf[ms] & 2-kBf[ms] & HS[ms] & BF[ms]\\
+    \hline\hline
+    P. aeruginosa & & & &\\
+    \hline
+    E. coli & & & &\\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Vremensko izvođenje implementacija autora prijedloga}
+  \begin{tabular}{|| p{2.7cm} | p{2cm} | p{2cm} | p{2cm} | p{2cm} ||}
+    \hline
+    Skup podataka & 1-kBf[ms] & 2-kBf[ms] & HS[ms] & BF[ms]\\
+    \hline\hline
+    P. aeruginosa & & & &\\
+    \hline
+    E. coli & & & &\\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Memorijsko zauzeće}
+  \begin{tabular}{|| p{2.7cm} | p{2cm} | p{2cm} | p{2cm} | p{2cm} ||}
+    \hline
+    Skup podataka & 1-kBf[MB] & 2-kBf[MB] & HS[MB] & BF[MB]\\
+    \hline\hline
+    P. aeruginosa & & & &\\
+    \hline
+    E. coli & & & &\\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Memorijsko zauzeće autora prijedloga}
+  \begin{tabular}{|| p{2.7cm} | p{2cm} | p{2cm} | p{2cm} | p{2cm} ||}
+    \hline
+    Skup podataka & 1-kBf[MB] & 2-kBf[MB] & HS[ms] & BF[MB]\\
+    \hline\hline
+    P. aeruginosa & & & &\\
+    \hline
+    E. coli & & & &\\
+    \hline
+  \end{tabular}
+\end{table}
 
 \chapter{Zaključak}
-Zaključak.
+Ovim radom se je pokazalo kako se korištenjem k-mera može postići bolji FPR, ali
+i kako smanjiti memorijsko zauzeće koje je potrebno za Bloom filtar. Također,
+pokazano je kako se odjednom ne može postići bolji FPR i manji Bloom filtar. Takav
+rezultat je očekivan jer smanjenjem Bloom filtra se smanjuje količina indeksa
+bit vektora koja se može koristiti. Time se bit vektor brže popuni jedinicama što
+uzrokuje veću vjerojatnost preklapanja indeksa novih elemenata s elementima za koje
+je potrebno provjeriti prisutnost u Bloom filtru.
 
+% \bibliographystyle{unsrt}
+% \bibliography{literatura}
 \bibliography{literatura}
 \bibliographystyle{fer}
-
-\chapter{Sažetak}
-Sažetak.
 
 \end{document}

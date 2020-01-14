@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2019.4.9)  14 JAN 2020 00:44
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2019.4.9)  14 JAN 2020 14:44
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -662,19 +662,19 @@ Document Style - pseudocode environments for use with the `algorithmicx' style
 ) (./Kbf.aux)
 \openout1 = `Kbf.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Try loading font information for T1+ptm on input line 15.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Try loading font information for T1+ptm on input line 20.
  (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1ptm.fd
 File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 )
@@ -780,31 +780,31 @@ e
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: float package is loaded.
 Package caption Info: End \AtBeginDocument code.
-LaTeX Font Info:    Try loading font information for T1+phv on input line 27.
+LaTeX Font Info:    Try loading font information for T1+phv on input line 32.
 
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1phv.fd
 File: t1phv.fd 2001/06/04 scalable font definitions for T1/phv.
 )
 LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/ptm/b/n' tried instead on input line 27.
+(Font)              Font shape `T1/ptm/b/n' tried instead on input line 32.
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 27.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 32.
 LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <24.88> not available
-(Font)              Font shape `T1/ptm/b/n' tried instead on input line 27.
+(Font)              Font shape `T1/ptm/b/n' tried instead on input line 32.
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <24.88> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 27.
-LaTeX Font Info:    Try loading font information for U+msa on input line 27.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 32.
+LaTeX Font Info:    Try loading font information for U+msa on input line 32.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 27.
+LaTeX Font Info:    Try loading font information for U+msb on input line 32.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Font shape `T1/phv/m/it' in size <14.4> not available
-(Font)              Font shape `T1/phv/m/sl' tried instead on input line 27.
+(Font)              Font shape `T1/phv/m/sl' tried instead on input line 32.
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./Kbf.toc
@@ -823,20 +823,55 @@ Poglavlje 1.
 ]
 Poglavlje 2.
 LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <17.28> not available
-(Font)              Font shape `T1/ptm/b/n' tried instead on input line 73.
+(Font)              Font shape `T1/ptm/b/n' tried instead on input line 78.
 [2
 
-] [3]
+] [3] [4]
 Poglavlje 3.
-[4
 
-] [5]
-Poglavlje 4.
-[6
+Underfull \hbox (badness 10000) in paragraph at lines 205--215
+
+ []
+
+[5
 
 ]
+Overfull \hbox (16.3535pt too wide) in paragraph at lines 233--234
+[] $\OML/cmm/m/it/12 contains[]left \OMS/cmsy/m/n/12  $ \T1/ptm/m/sc/12 con-ta-
+ins_set\T1/ptm/m/n/12 ($[]$s_distant_left_neighbour_set($\OML/cmm/m/it/12 query
+; i$\T1/ptm/m/n/12 )) 
+ []
+
+
+Overfull \hbox (30.6335pt too wide) in paragraph at lines 234--235
+[] $\OML/cmm/m/it/12 contains[]right \OMS/cmsy/m/n/12  $ \T1/ptm/m/sc/12 con-ta
+-ins_set\T1/ptm/m/n/12 ($[]$s_distant_right_neighbour_set($\OML/cmm/m/it/12 que
+ry; i$\T1/ptm/m/n/12 )) 
+ []
+
+
+Overfull \hbox (11.59575pt too wide) in paragraph at lines 260--261
+[] $\OML/cmm/m/it/12 contains[]left \OMS/cmsy/m/n/12  $ \T1/ptm/m/sc/12 con-ta-
+ins_set\T1/ptm/m/n/12 (s_distant_left_neighbour_set($\OML/cmm/m/it/12 query; l[
+]dist$\T1/ptm/m/n/12 )) 
+ []
+
+
+Overfull \hbox (26.2935pt too wide) in paragraph at lines 261--262
+[] $\OML/cmm/m/it/12 contains[]right \OMS/cmsy/m/n/12  $ \T1/ptm/m/sc/12 con-ta
+-ins_set\T1/ptm/m/n/12 (s_distant_right_neighbour_set($\OML/cmm/m/it/12 query; 
+r[]dist$\T1/ptm/m/n/12 )) 
+ []
+
+[6] [7]
+Poglavlje 4.
+LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <10.95> not available
+(Font)              Font shape `T1/ptm/b/n' tried instead on input line 319.
+[8
+
+] [9]
 Poglavlje 5.
-(./Kbf.bbl [7
+(./Kbf.bbl [10
 
 ]
 Poglavlje 6.
@@ -871,36 +906,34 @@ Underfull \hbox (badness 10000) in paragraph at lines 19--22
 \T1/pcr/m/n/12 / / bioinfologics . github . io / post / 2018 / 09 / 17 /
  []
 
-) [8
-
-]
-Poglavlje 7.
-[9
+) [11
 
 ] (./Kbf.aux) ) 
 Here is how much of TeX's memory you used:
- 7387 strings out of 492982
- 102745 string characters out of 6134897
- 186584 words of memory out of 5000000
- 10775 multiletter control sequences out of 15000+600000
- 52272 words of font info for 72 fonts, out of 8000000 for 9000
+ 7451 strings out of 492982
+ 103629 string characters out of 6134897
+ 192601 words of memory out of 5000000
+ 10834 multiletter control sequences out of 15000+600000
+ 73493 words of font info for 85 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 43i,6n,40p,270b,288s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 43i,9n,40p,270b,413s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr
-/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/share
-/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texliv
-e/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf
--dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/
-fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/u
-rw/helvetic/uhvb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/
-uhvr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb>
-</usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/tex
-live/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist
-/fonts/type1/urw/times/utmri8a.pfb>
-Output written on Kbf.pdf (11 pages, 125929 bytes).
+/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/share/texli
+ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/u
+rw/courier/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/u
+hvb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></
+usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb></usr/share/t
+exlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-di
+st/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/
+urw/times/utmri8a.pfb>
+Output written on Kbf.pdf (13 pages, 155238 bytes).
 PDF statistics:
- 85 PDF objects out of 1000 (max. 8388607)
- 60 compressed objects within 1 object stream
+ 100 PDF objects out of 1000 (max. 8388607)
+ 71 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

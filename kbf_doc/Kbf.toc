@@ -3,8 +3,7 @@
 \contentsline {chapter}{\numberline {2}Smanjenje FPR-a kori\IeC {\v s}tenjem k-mera}{2}
 \contentsline {section}{\numberline {2.1}Jednostrani k-mer Bloom filtar}{2}
 \contentsline {section}{\numberline {2.2}Dvostrani k-mer Bloom filtar}{3}
-\contentsline {chapter}{\numberline {3}Princip preklapanja sekvenci za smanjenje k-mer setova}{4}
-\contentsline {chapter}{\numberline {4}Usporedba rezultata}{6}
-\contentsline {chapter}{\numberline {5}Zaklju\IeC {\v c}ak}{7}
-\contentsline {chapter}{\numberline {6}Literatura}{8}
-\contentsline {chapter}{\numberline {7}Sa\IeC {\v z}etak}{9}
+\contentsline {chapter}{\numberline {3}Princip preklapanja sekvenci za smanjenje k-mer setova}{5}
+\contentsline {chapter}{\numberline {4}Usporedba rezultata}{8}
+\contentsline {chapter}{\numberline {5}Zaklju\IeC {\v c}ak}{10}
+\contentsline {chapter}{\numberline {6}Literatura}{11}
