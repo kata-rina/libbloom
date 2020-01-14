@@ -6,6 +6,7 @@
 #include <mutate.h>
 #include <sys/time.h>
 #include <time.h>
+#include <best_fit.h>
 
 #define S_DIST          1
 
@@ -94,7 +95,7 @@ int main (int argc, char ** argv)
   fsize = ftell(fd);
   if(fsize < 1000)
   {
-    fsize *= 10000;
+    fsize *= 100000;
   }
   fsize *= 4;
   // printf("Size is %ld\n", fsize);
@@ -107,7 +108,7 @@ int main (int argc, char ** argv)
     printf("Bloom not initialized\n");
     return 0;
   }
-  if(bloom_init(&edge_bloom, 20000*k, 0.28))
+  if(bloom_init(&edge_bloom, fsize, 0.28))
   {
     printf("Edge bloom not initialized\n");
     return 0;
@@ -161,7 +162,8 @@ int main (int argc, char ** argv)
   fseek(fd, 0, SEEK_SET);
   gettimeofday(&tp, NULL);
   parse_before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
-  sparse_fasta(fd, &sparse_bloom, &edge_bloom, k, dist);
+  // sparse_fasta(fd, &sparse_bloom, &edge_bloom, k, dist);
+  best_fit_parse(fd, &sparse_bloom, &edge_bloom, k, dist);
   gettimeofday(&tp, NULL);
   parse_after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   fseek(query_fd, 0, SEEK_SET);
@@ -213,7 +215,7 @@ int main (int argc, char ** argv)
   {
     fclose(query_fd);
   }
-  // fclose(query_fd);
+  fclose(query_fd);
   bloom_free(&bloom);
   bloom_free(&edge_bloom);
   bloom_free(&sparse_bloom);

@@ -1,5 +1,7 @@
 build
 **/test_2side/build/
-**/test_files/
+test_files/mutate.txt
+test_files/test_reads.txt
+test_files/test.txt
 test_2side/test
 test_2side/mutate

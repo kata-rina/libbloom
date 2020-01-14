@@ -1,4 +1,4 @@
-SRC += main.c 2sidekmer.c mutate.c
+SRC += main.c 2sidekmer.c mutate.c best_fit.c
 SRC += bloom.c MurmurHash2.c
 INC += $(wildcard ./*.h) ../bloom.h ../murmur2/murmurhash2.h
 OBJ = $(addsuffix .o, $(basename $(SRC)))
