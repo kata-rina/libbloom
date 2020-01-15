@@ -11,7 +11,7 @@ int parse_fasta ( FILE * fd, struct bloom * bloom, struct bloom * edge_bloom,
   char *line = NULL, last_kmer[kmer_size + 1], edge_kmer[kmer_size + 1];
   size_t len = 0;
   ssize_t read;
-  uint8_t left_edge = 0, first = 1, i;
+  uint8_t left_edge = 0, first = 1, i, line_length, kmer_length;
   // uint8_t check;
   unsigned int line_cnt = 0, j = 0;
 
@@ -35,8 +35,10 @@ int parse_fasta ( FILE * fd, struct bloom * bloom, struct bloom * edge_bloom,
     }
     for (i = 0; i < len - 1; i++)
     {
-      if(((strlen(line + i) - 1 < kmer_size)
-          || (strlen(line + i) + strlen(last_kmer) - 1 < kmer_size))
+      line_length = strlen(line + i);
+      kmer_length = strlen(last_kmer);
+      if(((line_length - 1 < kmer_size)
+          || (line_length + kmer_length - 1 < kmer_size))
           && first)
       {
         // printf("break\n");
@@ -50,28 +52,31 @@ int parse_fasta ( FILE * fd, struct bloom * bloom, struct bloom * edge_bloom,
         snprintf(kmer, kmer_size+1, "%s", line+i);
         // printf("in first kmer to add: %s\n", kmer);
         bloom_add(bloom, kmer, kmer_size);
-        snprintf(last_kmer, kmer_size + 1, "%s", line + i - 1);
+        // snprintf(last_kmer, kmer_size + 1, "%s", line + i - 1);
         snprintf(edge_kmer, kmer_size + 1, "%s", kmer);
       }
       else
       {
         j = 0;
+        line_length = strlen(line);
         // printf("in else, last_kmer = %s\n", last_kmer);
-        if(strlen(line) < kmer_size)
+        if(line_length < kmer_size)
         {
           /* If length of line is < kmer_size (it could be the last line of
              sequence read) don't include new line character '\n' */
-          *(line + strlen(line) - 1) = '\0';
+          *(line + line_length - 1) = '\0';
         }
-        while(strlen(last_kmer) > 0)
+        kmer_length = strlen(last_kmer);
+        while(kmer_length > 0)
         {
           // memset(kmer, 0, sizeof(kmer));
           j++;
-          memmove(last_kmer, &(last_kmer[1]), strlen(&(last_kmer[1])));
+          memmove(last_kmer, &(last_kmer[1]), kmer_length - 1);
           last_kmer[kmer_size - j] = '\0';
-          snprintf(kmer, strlen(last_kmer) + 1, "%s", last_kmer);
-          kmer[strlen(last_kmer)] = '\0';
-          strncat(kmer, line, kmer_size - strlen(last_kmer));
+          kmer_length--;
+          snprintf(kmer, kmer_length + 1, "%s", last_kmer);
+          kmer[kmer_length] = '\0';
+          strncat(kmer, line, kmer_size - kmer_length);
           /* in case that last line of input file has less characters than
             kmer_size, break at last k-mer. If break statement is missing then
             the last k-mer won't be of kmer_size length */
@@ -128,6 +133,7 @@ int two_sided_contains ( char * kmer, struct bloom * bloom,
       // printf("right neighbour of %s is %s\n", kmer, right_kmer);
       if(bloom_check(bloom, right_kmer, kmer_size))
       {
+        // printf("right neighbour %s of %s kmer present\n", right_kmer, kmer);
         if(contains_left) return 1;
         contains_right = 1;
         // if(bloom_check(edge_bloom, kmer, kmer_size)) return 1;
@@ -141,6 +147,7 @@ int two_sided_contains ( char * kmer, struct bloom * bloom,
       // printf("left neighbour of %s is %s\n", kmer, left_kmer);
       if(bloom_check(bloom, left_kmer, kmer_size))
       {
+        // printf("left neighbour of %s is %s\n", kmer, left_kmer);
         if(contains_right) return 1;
         contains_left = 1;
         // if(bloom_check(edge_bloom, kmer, kmer_size)) return 1;
@@ -326,7 +333,7 @@ static int strict_contains_neighbours ( char * query,
       return 0;
     }
   }
-  for(unsigned int i = 0; i < sizeof(bases); i++)
+  for(unsigned int i = 0; i < 4; i++)
   {
     if(*final_contain)
     {

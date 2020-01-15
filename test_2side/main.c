@@ -6,6 +6,7 @@
 #include <mutate.h>
 #include <sys/time.h>
 #include <time.h>
+#include <best_fit.h>
 
 #define S_DIST          1
 
@@ -40,7 +41,7 @@ unsigned int bloom_present = 0;
           4. 0 - don't mutate, 1 - mutate
   ~ if there isn't enough arguments, code will process data with hard coded
     constants, k will be 20 and s will be 1.
-  ~ usage example: ./test ../test_files/test.txt 20 1 "AAGAGACCGGCGATTCTAGT" */
+  ~ usage example: ./test ../test_files/test.txt 20 1 1 */
 
 int main (int argc, char ** argv)
 {
@@ -94,7 +95,7 @@ int main (int argc, char ** argv)
   fsize = ftell(fd);
   if(fsize < 1000)
   {
-    fsize *= 10000;
+    fsize *= 100000;
   }
   fsize *= 4;
   // printf("Size is %ld\n", fsize);
@@ -102,12 +103,12 @@ int main (int argc, char ** argv)
   long before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   fseek(fd, 0, SEEK_SET);
   init_before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
-  if(bloom_init(&bloom, fsize, 0.28))
+  if(bloom_init(&bloom, fsize, 0.29))
   {
     printf("Bloom not initialized\n");
     return 0;
   }
-  if(bloom_init(&edge_bloom, 20000*k, 0.28))
+  if(bloom_init(&edge_bloom, fsize, 0.28))
   {
     printf("Edge bloom not initialized\n");
     return 0;
@@ -128,7 +129,8 @@ int main (int argc, char ** argv)
   query_after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   gettimeofday(&tp, NULL);
   long after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
-  printf("  Finished in %d ms\n  Query time is %d ms\n", (int) (after - before),
+  parse_time = (int)(init_after - init_before + parse_after - parse_before);
+  printf("  Building bloom in %d ms\n  Query time is %d ms\n", parse_time,
       (int)(query_after - query_before));
   printf("FPR is %f\n", (float)(-(queries-mutated-bloom_present)/(float)queries));
   printf("%d k-mers present of %d standard queries with %d mutated\n",
@@ -140,33 +142,39 @@ int main (int argc, char ** argv)
   million_two_sided(query_fd, k);
   gettimeofday(&tp, NULL);
   after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
-  parse_time = (int) (init_after - init_before + parse_after - parse_before +
-      after - before);
-  printf("  Finished in %d ms\n  Query time is %d ms\n", parse_time,
+  // parse_time = (int) (init_after - init_before + parse_after - parse_before +
+  //     after - before);
+  printf("  Building bloom in %d ms\n  Query time is %d ms\n", parse_time,
       (int) (after - before));
   printf("FPR is %f\n", (float)(-(queries-mutated-present)/(float)queries));
   printf("%d k-mers present of %d queries in bloom with %d mutated\n", present,
       queries, mutated);
   printf("***********************Strict query************************\n");
   gettimeofday(&tp, NULL);
-  before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  init_before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   if(bloom_init(&sparse_bloom, fsize/1.5, 0.28))
   {
     printf("Sparse bloom not initialized\n");
     return 0;
   }
+  gettimeofday(&tp, NULL);
+  init_after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
   fseek(fd, 0, SEEK_SET);
-  sparse_fasta(fd, &sparse_bloom, &edge_bloom, k, dist);
-  fseek(query_fd, 0, SEEK_SET);
   gettimeofday(&tp, NULL);
   parse_before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
-  million_strict(query_fd, k, dist);
+  // sparse_fasta(fd, &sparse_bloom, &edge_bloom, k, dist);
+  best_fit_parse(fd, &sparse_bloom, &edge_bloom, k, dist);
   gettimeofday(&tp, NULL);
   parse_after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  fseek(query_fd, 0, SEEK_SET);
+  gettimeofday(&tp, NULL);
+  before = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
+  million_strict(query_fd, k, dist);
   gettimeofday(&tp, NULL);
   after = (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
-  printf("  Finished in %d ms\n  Query time is %d ms\n", (int) (after - before),
-      (int)(parse_after - parse_before));
+  parse_time = (int)(init_after - init_before + parse_after - parse_before);
+  printf("  Building bloom in %d ms\n  Query time is %d ms\n", parse_time,
+      (int)(after - before));
   printf("FPR is %f\n", (float)(-(queries-mutated-strict_present)/(float)queries));
   printf("%d k-mers present of %d strict queries with %d mutated\n",
       strict_present, queries, mutated);
@@ -174,13 +182,21 @@ int main (int argc, char ** argv)
   // bloom_print(&edge_bloom);
   // bloom_print(&sparse_bloom);
   // check = two_sided_contains("TGATGTTCGTGCTGATCATG", &bloom, &edge_bloom, k);
-  // if(two_sided_contains("TGATGTTCGTGCTGATCATG", &bloom, &edge_bloom, k))
+  // if(two_sided_contains("GGGATGAACGAGATGGTTAT", &bloom, &edge_bloom, k))
   // {
-  //   printf("TGATGTTCGTGCTGATCATG contained in bloom filter\n");
+  //   printf("GGGATGAACGAGATGGTTAT contained in bloom filter\n");
   // }
   // if(two_sided_contains("CTTTGGCAGCAGTGCGTGGA", &bloom, &edge_bloom, k))
   // {
   //   printf("CTTTGGCAGCAGTGCGTGGA contained in bloom filter\n");
+  // }
+  // if(two_sided_contains("TTTAAAGAGACCGGCGATTC", &bloom, &edge_bloom, k))
+  // {
+  //   printf("TTTAAAGAGACCGGCGATTC contained in bloom filter\n");
+  // }
+  // if(two_sided_contains("TGAAGCCCAGCAATTGCGTG", &bloom, &edge_bloom, k))
+  // {
+  //   printf("TGAAGCCCAGCAATTGCGTG contained in bloom filter\n");
   // }
   // check = strict_contains (kmer, &sparse_bloom, &edge_bloom, dist, k);
   // if(check)
@@ -199,7 +215,7 @@ int main (int argc, char ** argv)
   {
     fclose(query_fd);
   }
-  // fclose(query_fd);
+  fclose(query_fd);
   bloom_free(&bloom);
   bloom_free(&edge_bloom);
   bloom_free(&sparse_bloom);
@@ -218,10 +234,10 @@ int million_two_sided ( FILE * fd, size_t kmer_size )
     {
       present++;
     }
-    else
-    {
-      // printf("%s kmer not present\n", line);
-    }
+    // else
+    // {
+    //   printf("%s kmer not present\n", line);
+    // }
   }
   free(line);
   return present;
@@ -238,10 +254,10 @@ int million_strict ( FILE *fd, size_t kmer_size, uint8_t s )
     {
       strict_present++;
     }
-    else
-    {
-      // printf("%s kmer not present\n", line);
-    }
+    // else
+    // {
+    //   printf("%s kmer not present\n", line);
+    // }
   }
   free(line);
   return strict_present;
@@ -258,10 +274,10 @@ int million_bloom ( FILE *fd, size_t kmer_size )
     {
       bloom_present++;
     }
-    else
-    {
-      // printf("%s kmer not present\n", line);
-    }
+    // else
+    // {
+    //   printf("%s kmer not present\n", line);
+    // }
   }
   free(line);
   return bloom_present;
