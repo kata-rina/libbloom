@@ -12,8 +12,8 @@ int best_fit_parse ( FILE *fd, struct bloom * sparse_bloom,
   uint8_t find_index = 0, idx_flag = 0, last_read = 0;
   unsigned int line_cnt = 0, l, file_offset = 0, cnt = 0;
   uint16_t index[s+1], idx = 0, max;
-  uint8_t k = sizeof(index)/sizeof(uint16_t);
-
+  // uint8_t k = sizeof(index)/sizeof(uint16_t);
+  uint8_t k = s+1;
   // printf("\n\n******** Sparse FASTA ********\n\n");
 
   // memset(kmer, 0, sizeof(kmer));
@@ -26,7 +26,7 @@ int best_fit_parse ( FILE *fd, struct bloom * sparse_bloom,
   {
     if(read == -1)
     {
-        for(i = 1; i <k; i++)
+        for(i = 1; i < k; i++)
         {
           if(max < index[i])
           {
@@ -54,7 +54,7 @@ int best_fit_parse ( FILE *fd, struct bloom * sparse_bloom,
       if(line_cnt)
       {
         find_index ^= 1;
-        bloom_add(edge_bloom, edge_kmer, kmer_size);
+        // bloom_add(edge_bloom, edge_kmer, kmer_size);
         first = 1;
         // printf("idx is %d\n", find_index);
         left_edge = 1;
@@ -287,7 +287,7 @@ int best_fit_parse ( FILE *fd, struct bloom * sparse_bloom,
   }
   // printf("right edge kmer to add: %s\n", last_kmer);
   bloom_add(sparse_bloom, last_kmer, kmer_size);
-  bloom_add(edge_bloom, last_kmer, kmer_size);
+  // bloom_add(edge_bloom, last_kmer, kmer_size);
   if(line)
   {
     free(line);
