@@ -7,9 +7,12 @@
 #include<string.h>
 #include<bloom.h>
 #include<hitting_set.h>
+#include<mutate.h>
 
 // returns head of the list of kmers
-kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bloom * bloom){
+kmer_node_t *parse_hitting_set(int kmer_size, FILE *f, struct bloom * bloom,
+                        struct bloom *edge_bloom)
+{
 
   printf("Parsing fasta format.....\n");
 
@@ -23,21 +26,32 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bl
 
   ssize_t read;
   size_t len = 0;
-  char sequence[kmer_size+1];
-  char next_sequence[kmer_size+1];
-  char previous_sequence[kmer_size+1];
+  char *line = NULL;
+
+  char sequence[kmer_size];
+  char next_sequence[kmer_size];
+  char previous_sequence[kmer_size];
+
   int first_line = 0;
   int cnt;
   int line_cnt = 0;
-  char *line = NULL;
 
-  char no_left[kmer_size];
+  int added = 0;
+  // char no_left[kmer_size];
   int overflow = 0;
-  int n = 0;
+  int end_flag = 0;
 
-  memset( sequence, 0, (kmer_size + 1)*sizeof(char) );
+  char last_prev[kmer_size];
+  char last[kmer_size];
+
+  memset( sequence, 0, (kmer_size+1)*sizeof(char) );
   memset( next_sequence, 0, (kmer_size+1)*sizeof(char) );
-  memset( previous_sequence, 0, (kmer_size+1)*sizeof(char));
+  memset( previous_sequence, 0, (kmer_size+1)*sizeof(char) );
+
+  memset( last_prev, 0, (kmer_size+1)*sizeof(char) );
+  memset( last, 0, (kmer_size+1)*sizeof(char) );
+
+  // char *no_left = "NNNNNNNNNNNNNNNNNNNN";
 
   // read line by line
   while( ( read = getline( &line, &len, f ) ) != -1 ){
@@ -47,6 +61,11 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bl
 
     if ( strchr(line, '>') ){
       first_line = 1;
+      if (line_cnt){
+        end_flag = 1;
+        snprintf(last_prev, kmer_size + 1, "%s", previous_sequence);
+        snprintf(last, kmer_size + 1, "%s", sequence);
+      }
       continue;
     }
     else{
@@ -69,9 +88,9 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bl
       // add sequencies to head
       if(line_cnt == 1){
 
-        head->current_kmer = malloc(sizeof(char)*kmer_size);
-        head->previous_kmers = malloc(sizeof(char)*kmer_size);
-        head->next_kmers = malloc(sizeof(char)*kmer_size);
+        head->current_kmer = malloc(sizeof(char)*(kmer_size+1));
+        head->previous_kmers = malloc(sizeof(char)*(kmer_size+1));
+        head->next_kmers = malloc(sizeof(char)*(kmer_size+1));
         head->next = NULL;
 
         snprintf(head->current_kmer, kmer_size + 1, "%s", sequence);
@@ -79,13 +98,24 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bl
         head->next_count = 1;
         head->previous_count = 0;
 
+        bloom_add(edge_bloom, sequence, kmer_size);
+        added += 1;
+        if (added == QUERIES){
+              return head;
+        }
+
       }
 
       // if its not first kmer from file to add, update list of kmers but do
       // not add left neighbour to node
       else{
 
-        add_to_list( sequence, no_left, next_sequence, kmer_size, head);
+        bloom_add(edge_bloom, sequence, kmer_size);
+        added += 1;
+        if (added == QUERIES){
+              return head;
+        }
+        // add_to_list( sequence, no_left, next_sequence, kmer_size, head);
 
       }
 
@@ -93,23 +123,34 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bl
 
     if (overflow){
 
-      printf("overflow occured\n" );
       overflow = 0;
-      snprintf( next_sequence, kmer_size + 1, "%s", &sequence[1]);
-      next_sequence[kmer_size -1] = *line++;
-      cnt++;
-      n++;
-      printf("%d)%s size %d\n", n, previous_sequence, sizeof(previous_sequence));
-      printf("%d)%s size %d\n", n, sequence, sizeof(sequence));
-      printf("%d)%s size %d\n", n, next_sequence, sizeof(next_sequence));
-      add_to_list( sequence, previous_sequence, next_sequence, kmer_size, head);
 
+      if(!end_flag){
+        end_flag = 0;
+        snprintf( next_sequence, kmer_size +1, "%s", &sequence[1]);
+        next_sequence[kmer_size -1] = *line++;
+        cnt++;
+        bloom_add(bloom, sequence, kmer_size);
+        added += 1;
+        if (added == QUERIES){
+              return head;
+        }
+        // add_to_list( sequence, previous_sequence, next_sequence, kmer_size, head);
+      }
+      else{
+        bloom_add(edge_bloom, last, kmer_size);
+        added += 1;
+        if (added == QUERIES){
+              return head;
+        }
+        // add_to_list(last, last_prev, no_left, kmer_size, head);
+      }
     }
 
     while(1){
 
       snprintf( previous_sequence, kmer_size + 1, "%s", next_sequence );
-      snprintf( sequence, kmer_size + 2, "%s", &next_sequence[1]);
+      snprintf( sequence, kmer_size + 1, "%s", &next_sequence[1]);
       sequence[kmer_size - 1] = *line++;
       cnt++;
       // check whether next neighbour continues in the next line
@@ -122,11 +163,13 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bl
       next_sequence[kmer_size -1] = *line++;
       cnt++;
 
-      n++;
-      // printf("%d)%s\n", n, previous_sequence);
-      // printf("%d)%s\n", n, sequence);
-      // printf("%d)%s\n", n, next_sequence);
-      add_to_list( sequence, previous_sequence, next_sequence, kmer_size, head);
+      bloom_add(bloom, sequence, kmer_size);
+      added += 1;
+      if (added == QUERIES){
+            return head;
+      }
+
+      // add_to_list( sequence, previous_sequence, next_sequence, kmer_size, head);
 
 
       // check whether last char of right neighbour is the last char in line
@@ -135,8 +178,10 @@ kmer_node_t *parse_hitting_set(int kmer_size, int skip_length, FILE *f,struct bl
       }
 
     }
+
+    line = line - read + 1;
   }
-  // free(line);
+  free(line);
   return head;
 }
 
@@ -150,6 +195,7 @@ void add_to_list(char *kmer, char *left, char *right, int kmer_size, kmer_node_t
   char *no_left = "NNNNNNNNNNNNNNNNNNNN";
   int cnt=0;
 
+
   while( (current->next != NULL) && (strcmp(current->current_kmer, kmer)) ){
 
     current = current->next;
@@ -159,16 +205,15 @@ void add_to_list(char *kmer, char *left, char *right, int kmer_size, kmer_node_t
   printf("Elements in list = %d\n" , cnt);
   // if node for kmer already exists -> update neighbouring kmers if neccessary
   if(!(strcmp(current->current_kmer, kmer))){
-
     // before reallocation check whether neighbours exist
     // if they dont exist add them to their previous/next set
     if(strcmp(left, no_left)){
       if (!check_presence(current->previous_kmers, left, kmer_size)){
         current->previous_count++;
-        char *new_p = (char *)realloc( current->previous_kmers,(kmer_size*current->previous_count));
+        char *new_p = (char *)realloc( current->previous_kmers,((kmer_size+1)*current->previous_count));
 
         if (new_p == NULL){
-          printf("realokacija za lijeve susjede nije uspjela\n");
+          printf("Failed to reallocate memory for previous kmers in node!\n");
         }
         current->previous_kmers = new_p;
         free(new_p);
@@ -179,11 +224,12 @@ void add_to_list(char *kmer, char *left, char *right, int kmer_size, kmer_node_t
 
     if (!check_presence(current->next_kmers, right, kmer_size)){
       current->next_count++;
-      char *new_n = (char *)realloc( current->next_kmers,(kmer_size*current->next_count));
+      char *new_n = (char *)realloc( current->next_kmers,((kmer_size+1)*current->next_count));
 
       if (new_n == NULL){
-        printf("realokacija za desne susjede nije uspjela\n");
+        printf("Failed to reallocate memory for next kmers in node!\n");
       }
+
       current->next_kmers = new_n;
       free(new_n);
       snprintf(current->next_kmers, kmer_size + 1, "%s", right);
@@ -195,20 +241,21 @@ void add_to_list(char *kmer, char *left, char *right, int kmer_size, kmer_node_t
   else{
 
     current->next = (kmer_node_t *) malloc(sizeof(kmer_node_t));
+
     if (  current->next == NULL){
-      printf("alokacija za novi element liste nije uspjela\n" );
+      printf("Failed to allocate memory for new node!\n" );
     }
     current->next->next = NULL;
 
-    current->next->current_kmer = malloc(sizeof(char)*kmer_size);
-    current->next->next_kmers = malloc(sizeof(char)*kmer_size);
+    current->next->current_kmer = malloc(sizeof(char)*(kmer_size+1));
+    current->next->next_kmers = malloc(sizeof(char)*(kmer_size+1));
 
     if (  current->next->current_kmer == NULL){
-      printf("alokacija za current kmer liste nije uspjela\n" );
+      printf("Failed to allocate memory for current kmer in new node!\n" );
     }
 
     if (  current->next->next_kmers == NULL){
-      printf("alokacija za next kmer liste nije uspjela\n" );
+      printf("Failed to allocate memory for next kmers in new node!\n" );
     }
 
     snprintf(current->next->current_kmer, kmer_size + 1, "%s", kmer);
@@ -216,10 +263,10 @@ void add_to_list(char *kmer, char *left, char *right, int kmer_size, kmer_node_t
 
     current->next->next_count = 1;
 
-    current->next->previous_kmers = malloc(sizeof(char)*kmer_size);
+    current->next->previous_kmers = malloc(sizeof(char)*(kmer_size+1));
 
     if (  current->next->previous_kmers == NULL){
-      printf("alokacija za previous kmer liste nije uspjela\n" );
+      printf("Failed to allocate memory for previous kmers in new node!\n" );
     }
 
     if(strcmp(left, no_left)){
@@ -228,13 +275,13 @@ void add_to_list(char *kmer, char *left, char *right, int kmer_size, kmer_node_t
     }
 
     // add kmer to the set of previous kmers
-    char *new = (char *)realloc( current->next->previous_kmers,(kmer_size*current->next->previous_count));
+    char *new = (char *)realloc( current->next->previous_kmers,((kmer_size+1)*current->next->previous_count));
+
     if (  new == NULL){
-      printf("2realokacija za previous kmer liste nije uspjela\n" );
+      printf("Failed to reallocate memory for previous kmers in node!\n" );
     }
 
     current->next->previous_kmers = new;
-    // free(new);
     snprintf(current->next->previous_kmers, kmer_size + 1, "%s", kmer);
 
     current->next->previous_count++;

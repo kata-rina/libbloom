@@ -8,10 +8,15 @@
 #include<mutate.h>
 #include<sys/time.h>
 #include<hitting_set.h>
+#include<relaxed_sparse.h>
+#include<stdint.h>
 
 
 int test_kbf(struct bloom * bloom_filter, FILE *f, int kmer_size, int type);
 float calculate_fpr(int queries, int positive, int mutated);
+int test_relaxed(struct bloom *bloom, struct bloom *edge, int kmer_size, FILE *f, int s);
+
+
 
 int main(void){
 
@@ -136,29 +141,6 @@ int main(void){
   //=================================================================================
   //=================================================================================
 
-  // create head
-  // char * example = "Mislav";
-  // char * example1 = "katarina";
-  // kmer_node_t *head = NULL;
-  //
-  // head = (kmer_node_t *) malloc(sizeof(kmer_node_t));
-  // head->current_kmer = malloc(sizeof(char)*KMER_SIZE);
-  // head->previous_kmers = malloc(sizeof(char)*KMER_SIZE);
-  // head->next_kmers = malloc(sizeof(char)*KMER_SIZE);
-  //
-  // head->current_kmer = example;
-  // head->previous_kmers = example;
-  // head->next_kmers = example;
-  // head->previous_count = 1;
-  // head->next_count = 1;
-  // head->next = NULL;
-  //
-  // add_to_list(example1, example1, example1, KMER_SIZE, head);
-  // add_to_list(example1, example1, example, KMER_SIZE, head);
-
-  //=================================================================================
-  //=================================================================================
-  //=================================================================================
 
   // for time stats
   struct timeval tstart, tstop;
@@ -166,7 +148,7 @@ int main(void){
   // file to read from
   FILE *f;
   int fsize;
-  char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/sparse.txt";
+  char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/GCF_000006765.1_ASM676v1_genomic.fna";
   f = fopen(filename, "r");
 
   fseek(f, 0, SEEK_END);
@@ -175,14 +157,81 @@ int main(void){
 
   // init bloom filter to store kmers
   struct bloom bloom_filter;
-  bloom_init(&bloom_filter, fsize*10000, 0.255);
-  // bloom_print(&bloom_filter);
-  int a = 1;
-  parse_hitting_set(KMER_SIZE, a, f, &bloom_filter);
+  bloom_init(&bloom_filter, fsize*5, 0.255);
+  bloom_print(&bloom_filter);
 
+  struct bloom edge_bloom;
+  bloom_init(&edge_bloom, 20000, 0.255);
+  bloom_print(&edge_bloom);
+
+  gettimeofday(&tstart, NULL);
+  parse_hitting_set(KMER_SIZE, f, &bloom_filter, &edge_bloom);
+  gettimeofday(&tstop, NULL);
+
+  printf("* Operating time = %f s\n ",
+            (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
+            (double) (tstop.tv_sec - tstart.tv_sec));
+
+
+  fseek(f, 0, SEEK_SET);
+  // mutate k-mers from original file for testing
+  // int mutated_nmr = mutate(f, KMER_SIZE, 1);
+  // store with mutation
+  // FILE *f_mutated;
+  // f_mutated = fopen("/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/mutate.txt", "r");
+
+  int non_mutated_nmr = mutate(f, KMER_SIZE, 0);
+
+  FILE *f_nonmutated;
+  f_nonmutated = fopen("/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/nonmutate.txt", "r");
+  int s = 2;
+  int kmer_size = 20;
+
+  gettimeofday(&tstart, NULL);
+  int a = test_relaxed(&bloom_filter, &edge_bloom, kmer_size, f_nonmutated, s);
+  gettimeofday(&tstop, NULL);
+
+  printf("* Operating time = %f s\n ",
+            (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
+            (double) (tstop.tv_sec - tstart.tv_sec));
+
+  float fpr = calculate_fpr(QUERIES, a, 0);
+  printf("* False positive rate => %f%s\npositive=%d\n", fpr, "%",a);
+
+  fclose(f_nonmutated);
   fclose(f);
+
   return 0;
 }
+
+
+
+
+// function for testing relaxed_sparse kbf performance
+int test_relaxed(struct bloom *bloom, struct bloom *edge, int kmer_size, FILE *f, int s){
+
+
+  ssize_t read;
+  size_t len = 0;
+  char *line = NULL;
+  char sequence[kmer_size];
+  int found = 0; // counter of positive queries
+  int cnt = 0;
+
+  memset( sequence, 0, kmer_size*sizeof(char) );
+
+  while( ( read = getline( &line, &len, f ) ) != -1 ){
+    cnt++;
+    snprintf( sequence, kmer_size + 1, "%s", line );
+
+    if (relaxed_contains( sequence, kmer_size, s, bloom, edge )){found++;}
+  }
+
+  free( line );
+  return found;
+
+}
+
 
 
 // function for testing kmer bloom filter performance
