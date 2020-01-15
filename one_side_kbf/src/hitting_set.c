@@ -111,7 +111,7 @@ kmer_node_t *parse_hitting_set(int kmer_size, FILE *f, struct bloom * bloom,
         bloom_add(edge_bloom, sequence, kmer_size);
         bloom_add(bloom, sequence, kmer_size);
 
-        add_to_list( sequence, no_left, next_sequence, kmer_size, head);
+        // add_to_list( sequence, no_left, next_sequence, kmer_size, head);
 
       }
 
@@ -126,18 +126,18 @@ kmer_node_t *parse_hitting_set(int kmer_size, FILE *f, struct bloom * bloom,
         snprintf( next_sequence, kmer_size +1, "%s", &sequence[1]);
         next_sequence[kmer_size -1] = *line++;
         cnt++;
-        // bloom_add(bloom, sequence, kmer_size);
+        bloom_add(bloom, sequence, kmer_size);
         sequence[kmer_size] = '\0';
-        printf("before adding to list: %s, size:\n",sequence, sizeof(sequence) );
-        add_to_list( sequence, previous_sequence, next_sequence, kmer_size, head);
+        // printf("before adding to list: %s, size:\n",sequence, sizeof(sequence) );
+        // add_to_list( sequence, previous_sequence, next_sequence, kmer_size, head);
       }
       else{
-        // bloom_add(edge_bloom, last, kmer_size);
-        // bloom_add(bloom, last, kmer_size);
+        bloom_add(edge_bloom, last, kmer_size);
+        bloom_add(bloom, last, kmer_size);
 
 
         }
-        add_to_list(last, last_prev, no_left, kmer_size, head);
+        // add_to_list(last, last_prev, no_left, kmer_size, head);
 
     }
 
@@ -157,11 +157,11 @@ kmer_node_t *parse_hitting_set(int kmer_size, FILE *f, struct bloom * bloom,
       next_sequence[kmer_size -1] = *line++;
       cnt++;
 
-      // bloom_add(bloom, sequence, kmer_size);
+      bloom_add(bloom, sequence, kmer_size);
 
       added += 1;
 
-      add_to_list( sequence, previous_sequence, next_sequence, kmer_size, head);
+      // add_to_list( sequence, previous_sequence, next_sequence, kmer_size, head);
 
 
       // check whether last char of right neighbour is the last char in line
@@ -174,7 +174,7 @@ kmer_node_t *parse_hitting_set(int kmer_size, FILE *f, struct bloom * bloom,
     line = line - read + 1;
   }
 
-  // bloom_add(edge_bloom, sequence, kmer_size);
+  bloom_add(edge_bloom, sequence, kmer_size);
 
   free(line);
   return head;
@@ -197,11 +197,11 @@ void add_to_list(char *kmer, char *left, char *right, int kmer_size, kmer_node_t
     cnt++;
   }
 
-  printf("Elements in list = %d\n" , cnt);
-  if (cnt == 31){
-    printf("%s\n", kmer );
-    printf("%s\n", current->current_kmer );
-  }
+  // printf("Elements in list = %d\n" , cnt);
+  // if (cnt == 31){
+  //   printf("%s\n", kmer );
+  //   printf("%s\n", current->current_kmer );
+  // }
   // if node for kmer already exists -> update neighbouring kmers if neccessary
   if(!(strcmp(current->current_kmer, kmer))){
     // before reallocation check whether neighbours exist

@@ -1,4 +1,5 @@
 #include<hitting_set.h>
+#include<relaxed_sparse.h>
 #include<bloom.h>
 #include<stdio.h>
 #include<stdlib.h>

@@ -30,8 +30,8 @@ int main(void){
   // file to read from
   FILE *f;
   int fsize;
-  // char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/GCF_000006765.1_ASM676v1_genomic.fna";
-  char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/sparse.txt";
+  char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/GCF_000006765.1_ASM676v1_genomic.fna";
+  // char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/sparse.txt";
   f = fopen(filename, "r");
   //
   fseek(f, 0, SEEK_END);
@@ -176,9 +176,15 @@ int main(void){
   int s = 1;
   int kmer_size = 20;
 
+  gettimeofday(&tstart, NULL);
   int a = test_relaxed( &bloom, &edge_bloom, kmer_size, f_mutated, s );
+  gettimeofday(&tstop, NULL);
 
   fpr = calculate_fpr(QUERIES, a, mutated_nmr);
+
+  printf("* Operating time = %f s\n ",
+            (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
+            (double) (tstop.tv_sec - tstart.tv_sec));
 
   printf("False positive rate => %f\n", fpr );
   //
