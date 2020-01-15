@@ -30,7 +30,8 @@ int main(void){
   // file to read from
   FILE *f;
   int fsize;
-  char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/GCF_000006765.1_ASM676v1_genomic.fna";
+  // char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/GCF_000006765.1_ASM676v1_genomic.fna";
+  char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/sparse.txt";
   f = fopen(filename, "r");
   //
   fseek(f, 0, SEEK_END);

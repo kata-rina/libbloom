@@ -6,9 +6,9 @@
 #include<onesidekbf.h>
 
 typedef struct kmer_node {
-  char *previous_kmers;
+  // char previous_kmers[5][KMER_SIZE];
   char *current_kmer;
-  char *next_kmers;
+  // char next_kmers[4][KMER_SIZE];
 
   int previous_count;
   int next_count;
