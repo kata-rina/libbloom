@@ -27,11 +27,12 @@ int mutate ( FILE *fd, size_t kmer_size, uint8_t mutate )
     {
       memset(kmer, '1', sizeof(kmer));
       getline(&line, &len, fd);
+      // continue;
     }
     if(strlen(line) - 1 < kmer_size)
     {
       memset(kmer, '1', sizeof(kmer));
-      fseek(fd, 0, SEEK_SET);
+      // fseek(fd, 0, SEEK_SET);
       continue;
     }
     if(strlen(kmer) < kmer_size + 1)
@@ -59,7 +60,7 @@ int mutate ( FILE *fd, size_t kmer_size, uint8_t mutate )
       {
         break;
       }
-      fseek(new_fd, 0, SEEK_END);
+      // fseek(new_fd, 0, SEEK_END);
     }
     memset(kmer, 0, sizeof(kmer));
     rnd_idx = rand() % (strlen(line) - 1);
@@ -89,7 +90,7 @@ int mutate ( FILE *fd, size_t kmer_size, uint8_t mutate )
       fputs(kmer, new_fd);
       // printf("kmer is %s",  kmer);
       queries++;
-      fseek(new_fd, 0, SEEK_END);
+      // fseek(new_fd, 0, SEEK_END);
     }
     // counter++;
   }
