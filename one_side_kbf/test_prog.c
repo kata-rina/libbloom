@@ -25,114 +25,122 @@ int main(void){
   //==============================================================================
 
   // // for time stats
-  // struct timeval tstart, tstop;
+  struct timeval tstart, tstop;
   //
-  // // file to read from
-  // FILE *f;
-  // int fsize;
-  // char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/GCF_000006765.1_ASM676v1_genomic.fna";
-  // f = fopen(filename, "r");
+  // file to read from
+  FILE *f;
+  int fsize;
+  char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/GCF_000006765.1_ASM676v1_genomic.fna";
+  f = fopen(filename, "r");
   //
-  // fseek(f, 0, SEEK_END);
-  // fsize = ftell(f);
-  // fseek(f, 0, SEEK_SET);
+  fseek(f, 0, SEEK_END);
+  fsize = ftell(f);
+  fseek(f, 0, SEEK_SET);
+
+  if (fsize < 10000){
+    fsize *=1000;
+  }
+  else{
+    fsize *= 4;
+  }
   //
-  // // init bloom filter to store kmers
-  // struct bloom bloom_filter;
-  // bloom_init(&bloom_filter, fsize, 0.255);
+  // init bloom filter to store kmers
+  struct bloom bloom_filter;
+  bloom_init(&bloom_filter, fsize, 0.29);
   //
-  // // parse fasta and add kmers to bloom filter
-  // gettimeofday(&tstart, NULL);
-  // parse_fasta(f, KMER_SIZE, &bloom_filter);
-  // gettimeofday(&tstop, NULL);
-  // printf("* Time needed to store kmers to bloom filter = %f s\n\n",
-  //           (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
-  //           (double) (tstop.tv_sec - tstart.tv_sec));
-  //
-  //
-  // // mutate k-mers from original file for testing
-  // int mutated_nmr = mutate(f, KMER_SIZE, 1);
-  // int non_mutated_nmr = mutate(f, KMER_SIZE, 0);
-  //
-  //
-  //
-  //
-  // printf("\n" );
-  // printf("********** One sided kbf performance testing with mutation **********\n" );
-  //
-  // // store with mutation
-  // FILE *f_mutated;
-  // f_mutated = fopen("/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/mutate.txt", "r");
-  //
-  // gettimeofday(&tstart, NULL);
-  // int match_mut = test_kbf(&bloom_filter, f_mutated , KMER_SIZE, 1);
-  // gettimeofday(&tstop, NULL);
-  //
-  // printf("* Number of mutated k-mers => %d\n", mutated_nmr );
-  // printf("* Positive queries => %d \n", match_mut );
-  // printf("* Operating time = %f s\n ",
-  //           (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
-  //           (double) (tstop.tv_sec - tstart.tv_sec));
-  //
-  // float fpr = calculate_fpr(QUERIES, match_mut, mutated_nmr);
-  // printf("* False positive rate => %f%s\n", fpr, "%");
+  // parse fasta and add kmers to bloom filter
+  gettimeofday(&tstart, NULL);
+  parse_fasta(f, KMER_SIZE, &bloom_filter);
+  gettimeofday(&tstop, NULL);
+  printf("* Time needed to store kmers to bloom filter = %f s\n\n",
+            (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
+            (double) (tstop.tv_sec - tstart.tv_sec));
   //
   //
+  // mutate k-mers from original file for testing
+  int mutated_nmr = mutate(f, KMER_SIZE, 1);
+  int non_mutated_nmr = mutate(f, KMER_SIZE, 0);
+
+
+
+  printf("\n" );
+  printf("********** One sided kbf performance testing with mutation **********\n" );
+
+  // store with mutation
+  FILE *f_mutated;
+  f_mutated = fopen("/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/mutate.txt", "r");
+
+  gettimeofday(&tstart, NULL);
+  int match_mut = test_kbf(&bloom_filter, f_mutated , KMER_SIZE, 1);
+  gettimeofday(&tstop, NULL);
+
+  printf("* Number of mutated k-mers => %d\n", mutated_nmr );
+  printf("* Positive queries => %d \n", match_mut );
+  printf("* Operating time = %f s\n ",
+            (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
+            (double) (tstop.tv_sec - tstart.tv_sec));
+
+  float fpr = calculate_fpr(QUERIES, match_mut, mutated_nmr);
+  printf("* False positive rate => %f%s\n", fpr, "%");
+
+
+
+
+  printf("\n" );
+  printf("********** One sided kbf performance testing without mutation **********\n" );
+
+  //store without mutation
+  FILE *f_nonmutated;
+  f_nonmutated = fopen("/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/nonmutate.txt", "r");
+
+  gettimeofday(&tstart, NULL);
+  int match = test_kbf(&bloom_filter, f_nonmutated , KMER_SIZE, 1);
+  gettimeofday(&tstop, NULL);
+
+  printf("* Number of mutated k-mers => %d\n", non_mutated_nmr );
+  printf("* Positive queries => %d \n", match );
+  printf("* Operating time = %f s\n ",
+            (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
+            (double) (tstop.tv_sec - tstart.tv_sec));
+
+  //restoring pointers to begginig of files
+  fseek(f_mutated, 0, SEEK_SET);
+  fseek(f_nonmutated, 0, SEEK_SET);
+
+
+
+
+  printf("\n" );
+  printf("********** Regular kbf performance testing with mutation **********\n" );
+
+  gettimeofday(&tstart, NULL);
+  match_mut = test_kbf(&bloom_filter, f_mutated , KMER_SIZE, 0);
+  gettimeofday(&tstop, NULL);
+
+  printf("* Number of mutated k-mers => %d\n", mutated_nmr );
+  printf("* Positive queries => %d \n", match_mut );
+  printf("* Operating time = %f s\n ",
+            (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
+            (double) (tstop.tv_sec - tstart.tv_sec));
+
+  fpr = calculate_fpr(QUERIES, match_mut, mutated_nmr);
+  printf("* False positive rate => %f%s\n", fpr, "%");
   //
-  // printf("\n" );
-  // printf("********** One sided kbf performance testing without mutation **********\n" );
   //
-  // //store without mutation
-  // FILE *f_nonmutated;
-  // f_nonmutated = fopen("/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/nonmutate.txt", "r");
-  //
-  // gettimeofday(&tstart, NULL);
-  // int match = test_kbf(&bloom_filter, f_nonmutated , KMER_SIZE, 1);
-  // gettimeofday(&tstop, NULL);
-  //
-  // printf("* Number of mutated k-mers => %d\n", non_mutated_nmr );
-  // printf("* Positive queries => %d \n", match );
-  // printf("* Operating time = %f s\n ",
-  //           (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
-  //           (double) (tstop.tv_sec - tstart.tv_sec));
-  //
-  // //restoring pointers to begginig of files
-  // fseek(f_mutated, 0, SEEK_SET);
-  // fseek(f_nonmutated, 0, SEEK_SET);
-  //
-  //
-  //
-  // printf("\n" );
-  // printf("********** Regular kbf performance testing with mutation **********\n" );
-  //
-  // gettimeofday(&tstart, NULL);
-  // match_mut = test_kbf(&bloom_filter, f_mutated , KMER_SIZE, 0);
-  // gettimeofday(&tstop, NULL);
-  //
-  // printf("* Number of mutated k-mers => %d\n", mutated_nmr );
-  // printf("* Positive queries => %d \n", match_mut );
-  // printf("* Operating time = %f s\n ",
-  //           (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
-  //           (double) (tstop.tv_sec - tstart.tv_sec));
-  //
-  // fpr = calculate_fpr(QUERIES, match_mut, mutated_nmr);
-  // printf("* False positive rate => %f%s\n", fpr, "%");
-  //
-  //
-  // printf("\n" );
-  // printf("********** Regular kbf performance testing without mutation **********\n" );
-  //
-  // gettimeofday(&tstart, NULL);
-  // match = test_kbf(&bloom_filter, f_nonmutated , KMER_SIZE, 0);
-  // gettimeofday(&tstop, NULL);
-  //
-  // printf("* Number of mutated k-mers => %d\n", non_mutated_nmr );
-  // printf("* Positive queries => %d \n", match );
-  // printf("* Operating time = %f s\n ",
-  //           (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
-  //           (double) (tstop.tv_sec - tstart.tv_sec));
-  //
-  //
+  printf("\n" );
+  printf("********** Regular kbf performance testing without mutation **********\n" );
+
+  gettimeofday(&tstart, NULL);
+  match = test_kbf(&bloom_filter, f_nonmutated , KMER_SIZE, 0);
+  gettimeofday(&tstop, NULL);
+
+  printf("* Number of mutated k-mers => %d\n", non_mutated_nmr );
+  printf("* Positive queries => %d \n", match );
+  printf("* Operating time = %f s\n ",
+            (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
+            (double) (tstop.tv_sec - tstart.tv_sec));
+
+
   // fclose(f_nonmutated);
   // fclose(f_mutated);
   // fclose(f);
@@ -141,65 +149,43 @@ int main(void){
   //=================================================================================
   //=================================================================================
 
+  printf("\n" );
+  printf("********** Relaxed kbf performance testing mutation **********\n" );
 
-  // for time stats
-  struct timeval tstart, tstop;
 
-  // file to read from
-  FILE *f;
-  int fsize;
-  char filename[] = "/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/GCF_000006765.1_ASM676v1_genomic.fna";
-  f = fopen(filename, "r");
-
-  fseek(f, 0, SEEK_END);
-  fsize = ftell(f);
-  fseek(f, 0, SEEK_SET);
-
-  // init bloom filter to store kmers
-  struct bloom bloom_filter;
-  bloom_init(&bloom_filter, fsize*5, 0.255);
-  bloom_print(&bloom_filter);
+  struct bloom bloom;
+  bloom_init(&bloom, fsize, 0.255);
 
   struct bloom edge_bloom;
   bloom_init(&edge_bloom, 20000, 0.255);
-  bloom_print(&edge_bloom);
-
-  gettimeofday(&tstart, NULL);
-  parse_hitting_set(KMER_SIZE, f, &bloom_filter, &edge_bloom);
-  gettimeofday(&tstop, NULL);
-
-  printf("* Operating time = %f s\n ",
-            (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
-            (double) (tstop.tv_sec - tstart.tv_sec));
-
 
   fseek(f, 0, SEEK_SET);
-  // mutate k-mers from original file for testing
-  // int mutated_nmr = mutate(f, KMER_SIZE, 1);
-  // store with mutation
-  // FILE *f_mutated;
-  // f_mutated = fopen("/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/mutate.txt", "r");
-
-  int non_mutated_nmr = mutate(f, KMER_SIZE, 0);
-
-  FILE *f_nonmutated;
-  f_nonmutated = fopen("/mnt/Jupiter/FAKS/Diplomski/3_semestar/Bioinformarika/genom/nonmutate.txt", "r");
-  int s = 2;
-  int kmer_size = 20;
 
   gettimeofday(&tstart, NULL);
-  int a = test_relaxed(&bloom_filter, &edge_bloom, kmer_size, f_nonmutated, s);
+  parse_hitting_set(KMER_SIZE, f, &bloom, &edge_bloom);
   gettimeofday(&tstop, NULL);
+
 
   printf("* Operating time = %f s\n ",
             (double) (tstop.tv_usec - tstart.tv_usec) / 1000000 +
             (double) (tstop.tv_sec - tstart.tv_sec));
 
-  float fpr = calculate_fpr(QUERIES, a, 0);
-  printf("* False positive rate => %f%s\npositive=%d\n", fpr, "%",a);
+  fseek(f_mutated, 0, SEEK_SET);
+  fseek(f_nonmutated, 0, SEEK_SET);
+  int s = 1;
+  int kmer_size = 20;
 
-  fclose(f_nonmutated);
-  fclose(f);
+  int a = test_relaxed( &bloom, &edge_bloom, kmer_size, f_mutated, s );
+
+  fpr = calculate_fpr(QUERIES, a, mutated_nmr);
+
+  printf("False positive rate => %f\n", fpr );
+  //
+  // gettimeofday(&tstop, NULL);
+  //
+  printf("%d\n", a);
+  //
+  // fclose(f);
 
   return 0;
 }
@@ -218,13 +204,22 @@ int test_relaxed(struct bloom *bloom, struct bloom *edge, int kmer_size, FILE *f
   int found = 0; // counter of positive queries
   int cnt = 0;
 
-  memset( sequence, 0, kmer_size*sizeof(char) );
+  // bloom_print(edge);
+  // bloom_print(bloom);
+
+
 
   while( ( read = getline( &line, &len, f ) ) != -1 ){
-    cnt++;
-    snprintf( sequence, kmer_size + 1, "%s", line );
 
-    if (relaxed_contains( sequence, kmer_size, s, bloom, edge )){found++;}
+    *(line + kmer_size) = '\0';
+
+    if (relaxed_contains( line, kmer_size, s, bloom, edge ))
+    {
+      found++;
+    }
+    else{
+      // printf("%s\n", line );
+    }
   }
 
   free( line );
@@ -269,7 +264,7 @@ int test_kbf(struct bloom * bloom_filter, FILE *f, int kmer_size, int type){
 float calculate_fpr(int queries, int positive, int mutated){
 
   float fpr;
-  fpr = (float)((positive + mutated) - queries) / (float)queries;
+  fpr = (float)(((positive + mutated) - queries) / (float)queries);
   fpr *= 100;
   return fpr;
 }

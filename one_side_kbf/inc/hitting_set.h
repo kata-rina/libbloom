@@ -3,6 +3,7 @@
 
 #include<bloom.h>
 #include<stdio.h>
+#include<onesidekbf.h>
 
 typedef struct kmer_node {
   char *previous_kmers;

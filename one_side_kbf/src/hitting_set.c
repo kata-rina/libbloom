@@ -99,10 +99,8 @@ kmer_node_t *parse_hitting_set(int kmer_size, FILE *f, struct bloom * bloom,
         head->previous_count = 0;
 
         bloom_add(edge_bloom, sequence, kmer_size);
-        added += 1;
-        if (added == QUERIES){
-              return head;
-        }
+        bloom_add(bloom, sequence, kmer_size);
+
 
       }
 
@@ -111,10 +109,8 @@ kmer_node_t *parse_hitting_set(int kmer_size, FILE *f, struct bloom * bloom,
       else{
 
         bloom_add(edge_bloom, sequence, kmer_size);
-        added += 1;
-        if (added == QUERIES){
-              return head;
-        }
+        bloom_add(bloom, sequence, kmer_size);
+
         // add_to_list( sequence, no_left, next_sequence, kmer_size, head);
 
       }
@@ -131,20 +127,17 @@ kmer_node_t *parse_hitting_set(int kmer_size, FILE *f, struct bloom * bloom,
         next_sequence[kmer_size -1] = *line++;
         cnt++;
         bloom_add(bloom, sequence, kmer_size);
-        added += 1;
-        if (added == QUERIES){
-              return head;
-        }
+
         // add_to_list( sequence, previous_sequence, next_sequence, kmer_size, head);
       }
       else{
         bloom_add(edge_bloom, last, kmer_size);
-        added += 1;
-        if (added == QUERIES){
-              return head;
+        bloom_add(bloom, last, kmer_size);
+
+
         }
         // add_to_list(last, last_prev, no_left, kmer_size, head);
-      }
+
     }
 
     while(1){
@@ -164,10 +157,8 @@ kmer_node_t *parse_hitting_set(int kmer_size, FILE *f, struct bloom * bloom,
       cnt++;
 
       bloom_add(bloom, sequence, kmer_size);
+
       added += 1;
-      if (added == QUERIES){
-            return head;
-      }
 
       // add_to_list( sequence, previous_sequence, next_sequence, kmer_size, head);
 
@@ -181,6 +172,11 @@ kmer_node_t *parse_hitting_set(int kmer_size, FILE *f, struct bloom * bloom,
 
     line = line - read + 1;
   }
+  // if (strlen(next_sequence) == kmer_size){
+  //     bloom_add(bloom, sequence, kmer_size);
+  // }
+  bloom_add(edge_bloom, sequence, kmer_size);
+
   free(line);
   return head;
 }

@@ -81,9 +81,7 @@ int parse_fasta(FILE * fp, int kmer_size, struct bloom * bloom){
 
     // restore pointer to line
     line = line - read + 1;
-    // if (added == QUERIES) {
-    //
-    //   break;}
+
   }
 
   printf("* %d kmers added to bloom filter\n", added);
@@ -100,12 +98,14 @@ int onesided_kbf_contains( char *kmer, int kmer_size, struct bloom * bloom ){
         char dna_base[] = { 'A', 'T', 'G', 'C'};
 
         char left_neighbour[kmer_size];
-        memset( left_neighbour, 0, kmer_size*sizeof(char) );
+        left_neighbour[0] = NULL;
+        // memset( left_neighbour, 0, kmer_size*sizeof(char) );
         snprintf( &left_neighbour[1], kmer_size, "%s", kmer);
 
 
         char right_neighbour[kmer_size];
-        memset( right_neighbour, 0, kmer_size*sizeof(char) );
+        right_neighbour[kmer_size-1] = NULL;
+        // memset( right_neighbour, 0, kmer_size*sizeof(char) );
         snprintf( right_neighbour, kmer_size, "%s", &kmer[1]);
 
 
@@ -114,10 +114,17 @@ int onesided_kbf_contains( char *kmer, int kmer_size, struct bloom * bloom ){
             left_neighbour[0] = dna_base[i];
             right_neighbour[kmer_size - 1] = dna_base[i];
 
-            if ( bloom_check( bloom, left_neighbour, kmer_size) == 1 ) {return 1;}
-            if ( bloom_check( bloom, right_neighbour, kmer_size) == 1) {return 1;}
+            if ( bloom_check( bloom, left_neighbour, kmer_size) == 1 ) {
+              // printf("left %s of %s\n", left_neighbour, kmer );
+              return 1;
+            }
+            if ( bloom_check( bloom, right_neighbour, kmer_size) == 1) {
+              // printf("right %s of %s\n", right_neighbour, kmer);
+              return 1;
+            }
           }
         }
 
+      // printf("not f\n", right_neighbour, kmer);
       return 0;
 }
